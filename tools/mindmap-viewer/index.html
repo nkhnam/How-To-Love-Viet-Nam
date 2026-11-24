@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTLVN - Sơ đồ tư duy từ PDF</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <h1 class="pdfpdf">Tự động tạo sơ đồ tư duy bằng AI qua PDF 🌟</h1>
+
+    <div id="result"></div>
+    <div id="map"></div>
+
+    <form
+      id="pdf-form"
+      method="POST"
+      enctype="multipart/form-data"
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        padding: 10px 20px;
+        border-radius: 30px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      "
+    >
+      <input
+        type="file"
+        id="file"
+        name="file"
+        accept="application/pdf"
+        required
+        style="
+          padding: 10px;
+          border: none;
+          border-radius: 20px;
+          background-color: #ffffff;
+          font-size: 1rem;
+          box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+          cursor: pointer;
+          width: 250px;
+        "
+      />
+      <button
+        type="submit"
+        style="
+          background-color: #007bff;
+          color: #ffffff;
+          border: none;
+          border-radius: 20px;
+          padding: 10px 20px;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        "
+        onmouseover="this.style.backgroundColor='#0056b3'"
+        onmouseout="this.style.backgroundColor='#007bff'"
+      >
+        Upload
+      </button>
+    </form>
+
+    <script type="module">
+      import MindElixir from "https://cdn.jsdelivr.net/npm/mind-elixir@^4.0.0/dist/MindElixir.js";
+
+      // Change this when the ai-api runs on another host/port.
+      const API_BASE = "http://localhost:5000";
+
+      const theme = {
+        name: "Latte",
+        palette: [
+          "#4968a3",
+          "#3b88c4",
+          "#4fa3d4",
+          "#2b5b84",
+          "#367fa2",
+          "#5e93b7",
+          "#4a719c",
+          "#28567d",
+          "#214e6d",
+          "#336699",
+        ],
+        cssVar: {
+          "--main-color": "#444446",
+          "--main-bgcolor": "#ffffff",
+          "--color": "#777777",
+          "--bgcolor": "#f6f6f6",
+          "--panel-color": "#444446",
+          "--panel-bgcolor": "#ffffff",
+          "--panel-border-color": "#eaeaea",
+        },
+      };
+
+      const colors = { 0: "red", 1: "blue", 2: "black", 3: "blue" };
+      const resultDiv = document.getElementById("result");
+      let mind = null;
+
+      function renderSummary(text) {
+        const lines = (text || "").split("\n");
+        let topic = lines[0].trim();
+        while (topic.startsWith("#")) {
+          topic = topic.slice(1).trim();
+        }
+        topic = topic || "Mind Map Title";
+
+        if (mind) {
+          mind.destroy();
+        }
+        mind = new MindElixir({ el: "#map", direction: MindElixir.SIDE, theme });
+        mind.init({ nodeData: { id: "title", topic, style: { fontSize: 70, fontWeight: "bold" } } });
+
+        const stack = [{ level: -1, parentId: "title" }];
+        let nextId = 1;
+
+        lines.slice(1).forEach((line) => {
+          const indentLevel = line.search(/\S/);
+          const topicText = line.trim().replace(/^[- ]+/, "").trim();
+          if (!topicText) return;
+
+          while (stack.length && indentLevel <= stack[stack.length - 1].level) {
+            stack.pop();
+          }
+          const id = String(nextId++);
+          const parentId = stack[stack.length - 1].parentId;
+          const fontSize = indentLevel === 0 ? 40 : 36;
+          const fontWeight = indentLevel === 0 ? 700 : 400;
+
+          mind.addChild(MindElixir.E(parentId), {
+            topic: topicText,
+            id,
+            style: {
+              fontSize,
+              fontWeight,
+              color: colors[indentLevel] || "black",
+              fontStyle: indentLevel === 0 ? "italic" : "none",
+            },
+          });
+          stack.push({ level: indentLevel, parentId: id });
+        });
+      }
+
+      document.getElementById("pdf-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        resultDiv.innerHTML = "<p>Đang xử lý PDF...</p>";
+        try {
+          const response = await fetch(`${API_BASE}/mindmap/upload`, {
+            method: "POST",
+            body: new FormData(event.target),
+            headers: { Accept: "application/json" },
+          });
+          const data = await response.json();
+          if (data.success) {
+            resultDiv.innerHTML = "<p>Tạo sơ đồ tư duy thành công.</p>";
+            renderSummary(data.summary);
+          } else {
+            resultDiv.innerHTML = `<p>Lỗi: ${data.error}</p>`;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `<p>Lỗi: ${error.message}</p>`;
+        }
+      });
+
+      fetch(`${API_BASE}/mindmap/summary`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => renderSummary((data && data.summary) || ""))
+        .catch(() => renderSummary(""));
+    </script>
+  </body>
+</html>

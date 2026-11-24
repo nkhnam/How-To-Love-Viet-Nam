@@ -1,0 +1,17 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/font/brother-home-font/info.txt",
+      "sha1": "c746009e2a343f8d714edf3c4557c133abb0bc14"
+    },
+    {
+      "path": "src/assets/font/brother-home-font/misc/READ ME.txt",
+      "sha1": "f7d03feb8a3457f3c45b50ab527570ecb3b0349e"
+    },
+    {
+      "path": "src/assets/font/Brotherhomedemoversion-1GGmZ.otf",
+      "sha1": "1ea01c9f1559519f08c6d2f2532f61e4c5675bd9"
+    }
+  ]
+}

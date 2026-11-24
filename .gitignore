@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Build output
+build/
+dist/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/ios/Pods/
+*.apk
+*.aab
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.keystore
+
+# Generated data (rebuild with services/ai-api/build_index.py)
+data/faiss_db/
+data/outputs/
+
+# Large media kept on disk but out of git
+assets/flashcards/
+web/public/Img/*.mp4
+web/public/Img/*.webm
+web/public/Img/videoplayback
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

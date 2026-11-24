@@ -1,0 +1,16 @@
+#map {
+  height: 77vh;
+  width: 100%;
+}
+
+.pdfpdf {
+  font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  margin-left: 40px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+#map * {
+  box-sizing: border-box;
+}
