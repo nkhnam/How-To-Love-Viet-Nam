@@ -7,7 +7,6 @@ import { PROVINCE_BY_LEGACY_ROUTE } from './data/provinces.js';
 
 import Home from './components/Homepage/Home.js';
 import Contact from './components/Contact/Contact.js';
-import Elearning from './components/Elearning/Elearning.js';
 import Register from './components/Signpage/register.js';
 import Login from './components/Signpage/login.js';
 import Profile from './components/Signpage/profile.js';
@@ -29,21 +28,14 @@ import UserProfile from './components/Signpage/userProfile.js';
 import Messages from './components/Signpage/messages.js';
 import Inbox from './components/Signpage/inbox.js';
 
-import Pratice from './components/Pratice/Pratice.js';
 import BotAnswer from './components/botAnswer.js';
-
-import Course from './components/Elearning/Course.js';
-import Course1 from './components/Elearning/Course1.js';
-import Course2 from './components/Elearning/Course2.js';
-import Course3 from './components/Elearning/Course3.js';
-import Course4 from './components/Elearning/Course4.js';
-import Course5 from './components/Elearning/Course5.js';
-
 import StudyBot from './components/StudyBot.js';
 import ChatBot from './components/chatBot.js';
 
 const ProvincesAtlasPage = lazy(() => import('./pages/ProvincesAtlasPage.js'));
 const ProvinceDetailPage = lazy(() => import('./pages/ProvinceDetailPage.js'));
+const LearningHubPage = lazy(() => import('./pages/LearningHubPage.js'));
+const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage.js'));
 
 function PageLoader() {
   return (
@@ -92,7 +84,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/elearning" element={<Elearning />} />
+          <Route path="/learn" element={<LearningHubPage />} />
+          <Route path="/learn/:courseId" element={<CourseDetailPage />} />
+          <Route path="/elearning" element={<Navigate to="/learn" replace />} />
 
           {/* Unified 63 Provinces Atlas & Detail */}
           <Route path="/provinces" element={<ProvincesAtlasPage />} />
@@ -129,18 +123,18 @@ function App() {
           <Route path="/editquiz/:id" element={<EditQuiz />} />
 
           {/* Practice & AI */}
-          <Route path="/pratice" element={<Pratice />} />
+          <Route path="/pratice" element={<Navigate to="/learn?mode=practice" replace />} />
           <Route path="/bot" element={<BotAnswer />} />
           <Route path="/chatbot" element={<ChatBot />} />
           <Route path="/studybot" element={<StudyBot />} />
 
           {/* Courses */}
-          <Route path="/course" element={<Course />} />
-          <Route path="/course1" element={<Course1 />} />
-          <Route path="/course2" element={<Course2 />} />
-          <Route path="/course3" element={<Course3 />} />
-          <Route path="/course4" element={<Course4 />} />
-          <Route path="/course5" element={<Course5 />} />
+          <Route path="/course" element={<Navigate to="/learn/dp10" replace />} />
+          <Route path="/course1" element={<Navigate to="/learn/dp11" replace />} />
+          <Route path="/course2" element={<Navigate to="/learn/dp12" replace />} />
+          <Route path="/course3" element={<Navigate to="/learn/ls10" replace />} />
+          <Route path="/course4" element={<Navigate to="/learn/ls11" replace />} />
+          <Route path="/course5" element={<Navigate to="/learn/ls12" replace />} />
 
           {/* Legacy Province Routes & Fallback */}
           <Route path="/:legacyKey" element={<LegacyProvinceRedirect />} />

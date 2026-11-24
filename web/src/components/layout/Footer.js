@@ -67,12 +67,12 @@ function Footer() {
             </h4>
             <ul className="space-y-[10px] text-[14px]">
               <li>
-                <Link to="/elearning" className="hover:text-white transition-colors">
+                <Link to="/learn" className="hover:text-white transition-colors">
                   Bài giảng E-learning
                 </Link>
               </li>
               <li>
-                <Link to="/pratice" className="hover:text-white transition-colors">
+                <Link to="/learn?mode=practice" className="hover:text-white transition-colors">
                   Luyện tập chuyên đề
                 </Link>
               </li>

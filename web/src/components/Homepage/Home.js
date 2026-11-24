@@ -99,7 +99,7 @@ const ECOSYSTEM_PILLARS = [
     color: 'bg-heritage-jade-soft text-heritage-jade',
     title: 'E-learning & Quiz GDPT 2018',
     desc: 'Hệ thống bài giảng, luyện tập chuyên đề và kho đề trắc nghiệm lớp 10, 11, 12 giúp củng cố kiến thức nhanh chóng.',
-    to: '/elearning',
+    to: '/learn',
     cta: 'Vào học ngay',
   },
   {
@@ -430,7 +430,7 @@ function Home() {
               làm đề trắc nghiệm tương tác và chia sẻ bài viết cùng cộng đồng học tập.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button to="/elearning" variant="secondary">
+              <Button to="/learn" variant="secondary">
                 <BookOpen className="w-4 h-4" />
                 Khám phá bài giảng
               </Button>

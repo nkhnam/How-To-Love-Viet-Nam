@@ -23,7 +23,7 @@ import BrandLogo from '../ui/BrandLogo';
 const NAV_ITEMS = [
   { to: '/', label: 'Trang chủ', end: true },
   { to: '/provinces', label: '63 Tỉnh thành' },
-  { to: '/elearning', label: 'Học tập' },
+  { to: '/learn', label: 'Học tập' },
   { to: '/listquiz', label: 'Quiz' },
   { to: '/bot', label: 'Trợ lý AI' },
   { to: '/blog', label: 'Cộng đồng' },
