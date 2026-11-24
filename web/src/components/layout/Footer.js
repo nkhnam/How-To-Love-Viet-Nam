@@ -82,7 +82,7 @@ function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/bot" className="hover:text-white transition-colors inline-flex items-center gap-[6px]">
+                <Link to="/ai" className="hover:text-white transition-colors inline-flex items-center gap-[6px]">
                   <Sparkles className="w-[14px] h-[14px] text-teal-400" />
                   Trợ lý học tập AI
                 </Link>

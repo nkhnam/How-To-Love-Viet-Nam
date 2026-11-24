@@ -393,7 +393,9 @@ function ProvinceDetailPage() {
               </button>
 
               <Link
-                to="/bot"
+                to={`/ai?tab=chat&q=${encodeURIComponent(
+                  `Hãy tóm tắt những nét nổi bật về lịch sử, địa lý và văn hóa của ${province.name}.`,
+                )}`}
                 className="text-left p-5 rounded-2xl bg-gradient-to-br from-heritage-jade to-teal-800 text-white shadow-card hover:-translate-y-0.5 transition-all"
               >
                 <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center mb-3">

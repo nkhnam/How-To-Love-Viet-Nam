@@ -107,7 +107,7 @@ const ECOSYSTEM_PILLARS = [
     color: 'bg-stone-100 text-heritage-ink',
     title: 'Trợ lý AI Lịch Sử & GDĐP',
     desc: 'Hỏi đáp theo nguồn SGK với RAG Chatbot và chụp ảnh bài tập để nhận lời giải kèm giải thích súc tích.',
-    to: '/bot',
+    to: '/ai',
     cta: 'Hỏi Trợ lý AI',
   },
 ];
@@ -221,7 +221,7 @@ function Home() {
               <Compass className="w-5 h-5" />
               Khám phá 63 Tỉnh thành
             </Button>
-            <Button to="/bot" variant="glass" size="lg">
+            <Button to="/ai" variant="glass" size="lg">
               <Sparkles className="w-5 h-5 text-amber-300" />
               Học cùng Trợ lý AI
             </Button>

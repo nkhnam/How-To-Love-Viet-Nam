@@ -28,14 +28,13 @@ import UserProfile from './components/Signpage/userProfile.js';
 import Messages from './components/Signpage/messages.js';
 import Inbox from './components/Signpage/inbox.js';
 
-import BotAnswer from './components/botAnswer.js';
 import StudyBot from './components/StudyBot.js';
-import ChatBot from './components/chatBot.js';
 
 const ProvincesAtlasPage = lazy(() => import('./pages/ProvincesAtlasPage.js'));
 const ProvinceDetailPage = lazy(() => import('./pages/ProvinceDetailPage.js'));
 const LearningHubPage = lazy(() => import('./pages/LearningHubPage.js'));
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage.js'));
+const AiStudioPage = lazy(() => import('./pages/AiStudioPage.js'));
 
 function PageLoader() {
   return (
@@ -124,8 +123,10 @@ function App() {
 
           {/* Practice & AI */}
           <Route path="/pratice" element={<Navigate to="/learn?mode=practice" replace />} />
-          <Route path="/bot" element={<BotAnswer />} />
-          <Route path="/chatbot" element={<ChatBot />} />
+          <Route path="/ai" element={<AiStudioPage />} />
+          <Route path="/bot" element={<Navigate to="/ai?tab=solver" replace />} />
+          <Route path="/chatbot" element={<Navigate to="/ai?tab=chat" replace />} />
+          <Route path="/mindmap" element={<Navigate to="/ai?tab=mindmap" replace />} />
           <Route path="/studybot" element={<StudyBot />} />
 
           {/* Courses */}

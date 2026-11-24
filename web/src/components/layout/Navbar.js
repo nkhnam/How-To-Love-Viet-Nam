@@ -25,7 +25,7 @@ const NAV_ITEMS = [
   { to: '/provinces', label: '63 Tỉnh thành' },
   { to: '/learn', label: 'Học tập' },
   { to: '/listquiz', label: 'Quiz' },
-  { to: '/bot', label: 'Trợ lý AI' },
+  { to: '/ai', label: 'Trợ lý AI' },
   { to: '/blog', label: 'Cộng đồng' },
 ];
 

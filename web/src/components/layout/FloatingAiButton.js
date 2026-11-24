@@ -16,7 +16,7 @@ function FloatingAiButton() {
 
   return (
     <Link
-      to="/bot"
+      to="/ai"
       aria-label="Mở Trợ lý AI HTLVN"
       className="fixed bottom-[20px] right-[20px] z-30 inline-flex items-center gap-[8px] px-[16px] py-[11px] rounded-full bg-heritage-jade text-white text-[14px] font-semibold shadow-lg hover:bg-teal-800 hover:-translate-y-0.5 transition-all duration-200 border border-teal-500/30"
     >
