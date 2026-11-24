@@ -1,5 +1,7 @@
-import { Routes, Route, Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import ScrollToTop from './components/layout/ScrollToTop.js';
+import NotFound from './components/layout/NotFound.js';
 
 import Home from './components/Homepage/Home.js';
 import Contact from './components/Contact/Contact.js';
@@ -298,20 +300,10 @@ import YenBaiLichSu from './components/ProvinceLink/YenBai/YenBaiLichSu.js';
 import ChatBot from './components/chatBot.js';
 
 function App() {
-    useEffect(() => {
-        const handleContextMenu = (event) => {
-            event.preventDefault();
-        };
-
-        document.addEventListener('contextmenu', handleContextMenu);
-
-        return () => {
-            document.removeEventListener('contextmenu', handleContextMenu);
-        };
-    }, []);
-
     return (
         <div className="App">
+            <ScrollToTop />
+            <ToastContainer position="bottom-right" autoClose={3500} theme="light" />
             <Routes>
                 <Route path="/" element={<Home />}></Route>
                 <Route path="/contact" element={<Contact />}></Route>
@@ -609,6 +601,7 @@ function App() {
                 <Route path="/YenBai" element={<YenBai />}></Route>
                 <Route path="/YenBai-DLTC" element={<YenBaiDanhLam />}></Route>
                 <Route path="/YenBai-DTLS" element={<YenBaiLichSu />}></Route>
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </div>
     );

@@ -1,0 +1,49 @@
+:root {
+  --htlvn-cream: #FAF7F2;
+  --htlvn-paper: #F5EFE6;
+  --htlvn-sand: #E7E0D4;
+  --htlvn-vermilion: #B91C1C;
+  --htlvn-vermilion-dark: #991B1B;
+  --htlvn-gold: #C88A1E;
+  --htlvn-jade: #0F766E;
+  --htlvn-ink: #1C1917;
+  --htlvn-muted: #57534E;
+  --htlvn-border: #E7E5E4;
+}
+
+/* Warm scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--htlvn-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d6cfc2;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b8ae9c;
+}
+
+/* 3D Flashcard utilities */
+.perspective-1200 {
+  perspective: 1200px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
