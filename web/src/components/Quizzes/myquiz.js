@@ -88,7 +88,7 @@ function MyQuiz() {
                         {userDetails && (
                             <div className="blog-profile special-profile">
                                 <img
-                                    src={userDetails.photo || './logo192.png'}
+                                    src={userDetails.photo || '/logo192.png'}
                                     alt="User Avatar"
                                     className="user-avatar"
                                 />

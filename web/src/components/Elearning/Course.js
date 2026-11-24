@@ -43,7 +43,7 @@ function Course() {
                 <div class="row">
                     <div class="column">
                         <div class="thumb">
-                            <img src="./Img/thumb-4.png" alt="" />
+                            <img src="/Img/thumb-4.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ function Course() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-1.jpeg" alt="" />
+                        <img src="/Img/post 1-1.jpeg" alt="" />
                         <h3>Bài 1: Võ Trường Toản - Danh nhân đất Gia Định</h3>
                         <h4
                             style={{
@@ -85,7 +85,7 @@ function Course() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-2.jpeg" alt="" />
+                        <img src="/Img/post 1-2.jpeg" alt="" />
                         <h3>Bài 2: Đạo lí "Uống nước nhớ nguồn" qua các nghi lễ dân giản ở TPHCM</h3>
                         <h4
                             style={{
@@ -102,7 +102,7 @@ function Course() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-3.jpeg" alt="" />
+                        <img src="/Img/post 1-3.jpeg" alt="" />
                         <h3>Bài 3: Quá trình tiếp nhận và biến đổi văn hóa vùng đất Sài Gòn - Gia Định - TPHCM</h3>
                         <h4
                             style={{
@@ -123,7 +123,7 @@ function Course() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-4.jpeg" alt="" />
+                        <img src="/Img/post 1-4.jpeg" alt="" />
                         <h3>Bài 4: Sự hình thành và phát triển các loại hình văn hóa, văn nghệ của TPHCM</h3>
                         <h4
                             style={{
@@ -140,7 +140,7 @@ function Course() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-5.jpeg" alt="" />
+                        <img src="/Img/post 1-5.jpeg" alt="" />
                         <h3>Bài 5: Hoạt động sản xuất thủ công nghiệp và tiểu thủ công nghiệp tại TPHCM</h3>
                         <h4
                             style={{
@@ -160,7 +160,7 @@ function Course() {
                         href="https://howtolovevietnam.netlify.app/elearningsection/historycourse1/course1/watch-video1"
                     >
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-6.jpeg" alt="" />
+                        <img src="/Img/post 1-6.jpeg" alt="" />
                         <h3>Bài 6: Khi tôi là "Đại sứ du lịch"</h3>
                         <h4
                             style={{

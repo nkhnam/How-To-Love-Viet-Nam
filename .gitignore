@@ -31,6 +31,7 @@ data/outputs/
 # Large media kept on disk but out of git
 assets/flashcards/
 web/public/Img/*.mp4
+!web/public/Img/hero-vietnam.mp4
 web/public/Img/*.webm
 web/public/Img/videoplayback
 

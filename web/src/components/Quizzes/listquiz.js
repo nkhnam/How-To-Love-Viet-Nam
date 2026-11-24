@@ -3,6 +3,8 @@ import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import Header from '../Header/Header';
+import '../Blogs/blog.css';
+import './quiz.css';
 
 function QuizzesList() {
     const [quizzes, setQuizzes] = useState([]);
@@ -121,7 +123,7 @@ function QuizzesList() {
                         {userDetails && (
                             <div className="blog-profile special-profile">
                                 <img
-                                    src={userDetails.photo || './logo192.png'}
+                                    src={userDetails.photo || '/logo192.png'}
                                     alt="User Avatar"
                                     className="user-avatar"
                                 />
@@ -183,7 +185,7 @@ function QuizzesList() {
                                             className="quiz-img-thumb"
                                         />
 
-                                        {quiz.completedBy && quiz.completedBy.includes(auth.currentUser.uid) && (
+                                        {quiz.completedBy && auth.currentUser && quiz.completedBy.includes(auth.currentUser.uid) && (
                                             <>
                                                 {userResults[quiz.id] && (
                                                     <>
@@ -220,7 +222,7 @@ function QuizzesList() {
                                             style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                                         >
                                             <img
-                                                src={quiz.author.photo || './logo192.png'}
+                                                src={quiz.author.photo || '/logo192.png'}
                                                 alt={quiz.author.name}
                                                 className="author-photo"
                                             />

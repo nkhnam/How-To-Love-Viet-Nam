@@ -44,7 +44,7 @@ function Pratice() {
                     
                     <div class="box">
                         <div class="thumb">
-                            <img src="./Img/elearning/thumb-1.png" alt="" />
+                            <img src="/Img/elearning/thumb-1.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                         <h3 class="title">Môn Lịch Sử 10</h3>
@@ -54,7 +54,7 @@ function Pratice() {
                     
                     <div class="box">
                         <div class="thumb">
-                            <img src="./Img/elearning/thumb-2.png" alt="" />
+                            <img src="/Img/elearning/thumb-2.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                         <h3 class="title">Môn Lịch Sử 11</h3>
@@ -63,7 +63,7 @@ function Pratice() {
 
                     <div class="box">
                         <div class="thumb">
-                            <img src="./Img/elearning/thumb-3.png" alt="" />
+                            <img src="/Img/elearning/thumb-3.png" alt="" />
                             <span>9 bài học</span>
                         </div>
                         <h3 class="title">Môn Lịch Sử 12</h3>
@@ -72,7 +72,7 @@ function Pratice() {
 
                     <div class="box">
                         <div class="thumb">
-                            <img src="./Img/elearning/thumb-4.png" alt="" />
+                            <img src="/Img/elearning/thumb-4.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                         <h3 class="title">Môn GDĐP 10</h3>
@@ -82,7 +82,7 @@ function Pratice() {
                     
                     <div class="box">
                         <div class="thumb">
-                            <img src="./Img/elearning/thumb-5.png" alt="" />
+                            <img src="/Img/elearning/thumb-5.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                         <h3 class="title">Môn GDĐP 11</h3>
@@ -92,7 +92,7 @@ function Pratice() {
                     
                     <div class="box">
                         <div class="thumb">
-                            <img src="./Img/elearning/thumb-6.png" alt="" />
+                            <img src="/Img/elearning/thumb-6.png" alt="" />
                             <span>0 bài học</span>
                         </div>
                         <h3 class="title">Môn GDĐP 12</h3>

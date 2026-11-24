@@ -43,7 +43,7 @@ function Course1() {
                 <div class="row">
                     <div class="column">
                         <div class="thumb">
-                            <img src="./Img/thumb-5.png" alt="" />
+                            <img src="/Img/thumb-5.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ function Course1() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-1.jpeg" alt="" />
+                        <img src="/Img/post 1-1.jpeg" alt="" />
                         <h3>Bài 1: Văn học hiện đại của TP.HCM</h3>
                         <h4
                             style={{
@@ -85,7 +85,7 @@ function Course1() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-2.jpeg" alt="" />
+                        <img src="/Img/post 1-2.jpeg" alt="" />
                         <h3>Bài 2: Danh nhân lịch sử của TP.HCM</h3>
                         <h4
                             style={{
@@ -102,7 +102,7 @@ function Course1() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-3.jpeg" alt="" />
+                        <img src="/Img/post 1-3.jpeg" alt="" />
                         <h3>Bài 3: Phong tục, luật tục và giáo dục pháp luật ở TP.HCM</h3>
                         <h4
                             style={{
@@ -126,7 +126,7 @@ function Course1() {
                         href="https://howtolovevietnam.netlify.app/elearningsection/historycourse1/course2/watch-video1"
                     >
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-4.jpeg" alt="" />
+                        <img src="/Img/post 1-4.jpeg" alt="" />
                         <h3>Bài 4: Phong cảnh TP.HCM</h3>
                         <h4
                             style={{
@@ -143,7 +143,7 @@ function Course1() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-5.jpeg" alt="" />
+                        <img src="/Img/post 1-5.jpeg" alt="" />
                         <h3>Bài 5: Thương mại của TP.HCM</h3>
                         <h4
                             style={{
@@ -160,7 +160,7 @@ function Course1() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/post 1-6.jpeg" alt="" />
+                        <img src="/Img/post 1-6.jpeg" alt="" />
                         <h3>Bài 6: Thu hút đầu tư cho phát triển kinh tế ở TP.HCM</h3>
                         <h4
                             style={{

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import DOMPurify from 'dompurify';
 import './blog.css';
 import { Link } from 'react-router-dom';
 
@@ -290,7 +291,7 @@ const BlogView = () => {
                         <div>
                             <div
                                 className="blog-detail-info"
-                                dangerouslySetInnerHTML={{ __html: Sapo }}
+                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(Sapo) }}
                                 style={{
                                     fontSize: '22px',
                                     fontStyle: 'italic',
@@ -303,7 +304,7 @@ const BlogView = () => {
                         <div>
                             <div
                                 className="blog-detail-info"
-                                dangerouslySetInnerHTML={{ __html: Body }}
+                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(Body) }}
                                 style={{ fontSize: '20px' }}
                             />
                         </div>

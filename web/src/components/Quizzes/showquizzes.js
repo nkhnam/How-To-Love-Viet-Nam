@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase'; // Import Firebase configuration
 import { doc, getDoc, updateDoc, arrayUnion, addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { auth } from '../firebase'; // Make sure you have configured Firebase Auth in your firebase.js
+import DOMPurify from 'dompurify';
 import './quiz.css';
 import correct from './right.m4a';
 import wrong from './wrong.m4a';
@@ -34,10 +35,10 @@ function ShowQuiz() {
     };
 
     const welcomeImages = [
-        '../Img/eddy.png',
-        '../Img/junior.png',
-        '../Img/bear.png',
-        '../Img/lily.png',
+        '/Img/eddy.png',
+        '/Img/junior.png',
+        '/Img/bear.png',
+        '/Img/lily.png',
 
         // Thêm các liên kết ảnh khác tại đây
     ];
@@ -573,7 +574,7 @@ function ShowQuiz() {
                                                         <span
                                                             className="explain-text"
                                                             dangerouslySetInnerHTML={{
-                                                                __html: currentQuestion.explain,
+                                                                __html: DOMPurify.sanitize(currentQuestion.explain),
                                                             }}
                                                         ></span>
                                                     </h2>

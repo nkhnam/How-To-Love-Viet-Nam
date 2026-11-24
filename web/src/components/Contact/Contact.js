@@ -6,7 +6,7 @@ function Contact() {
         <>
             <Header />
             <main className="hero-section" id="hero-section">
-                <img src="./Img/background5.jpg" alt="" className="contact-img" />
+                <img src="/Img/background5.jpg" alt="" className="contact-img" />
                 <div className="container-contact">
                     <div className="wrapped">
                         <div className="anotherInner">

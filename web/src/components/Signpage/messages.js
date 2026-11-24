@@ -213,7 +213,7 @@ function Messages() {
                     {searchTerm
                         ? filteredUsers.map((user) => (
                               <div key={user.id} className="user-item" onClick={() => handleUserClick(user.id)}>
-                                  <img src={user.photo || './logo192.png'} alt="avatar" />
+                                  <img src={user.photo || '/logo192.png'} alt="avatar" />
                                   <div>
                                       <span>{user.firstName}</span>
                                       <span className="latest-message">
@@ -226,7 +226,7 @@ function Messages() {
                           ))
                         : conversations.map((user) => (
                               <div key={user.id} className="user-item" onClick={() => handleUserClick(user.id)}>
-                                  <img src={user.photo || './logo192.png'} alt="avatar" />
+                                  <img src={user.photo || '/logo192.png'} alt="avatar" />
                                   <div>
                                       <span>{user.name}</span>
                                       <span className="latest-message">
@@ -256,7 +256,7 @@ function Messages() {
                                         className={`message comment-item ${isSentByCurrentUser ? 'sent' : 'received'}`}
                                     >
                                         <img
-                                            src={profile?.photo || './logo192.png'}
+                                            src={profile?.photo || '/logo192.png'}
                                             alt="avatar"
                                             className={`avatar ${!isSentByCurrentUser ? 'block' : 'none'}`}
                                         />
@@ -275,7 +275,7 @@ function Messages() {
                                         </div>
 
                                         <img
-                                            src={profile?.photo || './logo192.png'}
+                                            src={profile?.photo || '/logo192.png'}
                                             alt="avatar"
                                             className={`avatar ${isSentByCurrentUser ? 'block' : 'none'}`}
                                         />

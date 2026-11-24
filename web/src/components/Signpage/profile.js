@@ -145,7 +145,7 @@ function Profile() {
                                     <div className="profile-header-avarta">
                                         <img
                                             style={{}}
-                                            src={newPhotoURL || userDetails.photo || './logo192.png'}
+                                            src={newPhotoURL || userDetails.photo || '/logo192.png'}
                                             alt="Profile"
                                         />
                                     </div>

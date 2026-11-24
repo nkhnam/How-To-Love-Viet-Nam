@@ -92,7 +92,7 @@ const MyPosts = () => {
                                     }}
                                 >
                                     <img
-                                        src={blog.author.photo || './logo192.png'}
+                                        src={blog.author.photo || '/logo192.png'}
                                         alt="Author"
                                         className="author-photo"
                                     />

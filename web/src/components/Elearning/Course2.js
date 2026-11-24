@@ -43,7 +43,7 @@ function Course2() {
                 <div class="row">
                     <div class="column">
                         <div class="thumb">
-                            <img src="./Img/thumb-6.png" alt="" />
+                            <img src="/Img/thumb-6.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                     </div>

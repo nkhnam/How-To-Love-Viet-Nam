@@ -80,7 +80,7 @@ const Bloglist = () => {
                         {userDetails && (
                             <div className="blog-profile special-profile">
                                 <img
-                                    src={userDetails.photo || './logo192.png'}
+                                    src={userDetails.photo || '/logo192.png'}
                                     alt="User Avatar"
                                     className="user-avatar"
                                 />
@@ -158,7 +158,7 @@ const Bloglist = () => {
                                                     }}
                                                 >
                                                     <img
-                                                        src={blog.author.photo || './logo192.png'}
+                                                        src={blog.author.photo || '/logo192.png'}
                                                         alt="Author"
                                                         className="author-photo"
                                                     />

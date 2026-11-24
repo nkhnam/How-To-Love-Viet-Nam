@@ -83,7 +83,7 @@ function Inbox() {
                     conversations.map((conversation) => (
                         <div key={conversation.id} className="conversation-item">
                             <Link to={`/messages/${conversation.id}`} className="conversation-link">
-                                <img src={conversation.photo || './logo192.png'} alt="avatar" className="avatar" />
+                                <img src={conversation.photo || '/logo192.png'} alt="avatar" className="avatar" />
                                 <span>{conversation.name}</span>
                             </Link>
                         </div>

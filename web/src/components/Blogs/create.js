@@ -148,7 +148,7 @@ const CreateBlog = () => {
                     />
 
                     <Editor
-                        apiKey="oeo0mvjhplm4h0ytixxwjwa33b2k5t3gfg2wcp3mdely60en"
+                        apiKey={process.env.REACT_APP_TINYMCE_API_KEY}
                         textareaName="Body"
                         initialValue="<i>Nội dung của bài viết</i>"
                         init={{

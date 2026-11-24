@@ -108,7 +108,7 @@ function UserProfile() {
                                                     }}
                                                     className="user-blog-cover-img"
                                                 ></img>
-                                                <di
+                                                <div
                                                     style={{
                                                         display: 'flex',
                                                         flexDirection: 'column',
@@ -121,7 +121,7 @@ function UserProfile() {
                                                         {blog.Title}
                                                     </h3>
                                                     <p className="user-blog-description">{blog.Sapo}</p>
-                                                </di>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

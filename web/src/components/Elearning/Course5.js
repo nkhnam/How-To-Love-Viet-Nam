@@ -43,7 +43,7 @@ function Course5() {
                 <div class="row">
                     <div class="column">
                         <div class="thumb">
-                            <img src="./Img/thumb-3.png" alt="" />
+                            <img src="/Img/thumb-3.png" alt="" />
                             <span>9 bài học</span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ function Course5() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (1).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (1).png" alt="" />
                         <h3>Bài 1. Liên hợp quốc</h3>
                         <h4
                             style={{
@@ -85,7 +85,7 @@ function Course5() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (2).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (2).png" alt="" />
                         <h3>Bài 2. Trật tự thế giới trong Chiến tranh lạnh</h3>
                         <h4
                             style={{
@@ -102,7 +102,7 @@ function Course5() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (3).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (3).png" alt="" />
                         <h3>Bài 3. Trật tự thế giới sau Chiến tranh lạnh</h3>
                         <h4
                             style={{
@@ -123,7 +123,7 @@ function Course5() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (4).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (4).png" alt="" />
                         <h3>Bài 4. Sự ra đời và phát triển của Hiệp hội các quốc gia Đông Nam Á (ASEAN)</h3>
                         <h4
                             style={{
@@ -140,7 +140,7 @@ function Course5() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (5).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (5).png" alt="" />
                         <h3>Bài 5. Cộng đồng ASEAN: Từ ý tưởng đến hiện thực</h3>
                         <h4
                             style={{
@@ -157,7 +157,7 @@ function Course5() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (6).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (6).png" alt="" />
                         <h3>Bài 6. Cách mạng tháng Tám năm 1945</h3>
                         <h4
                             style={{
@@ -180,7 +180,7 @@ function Course5() {
                         href="https://howtolovevietnam.netlify.app/elearningsection/historycourse1/course4/watch-video1"
                     >
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (7).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (7).png" alt="" />
                         <h3>Bài 7. Cuộc kháng chiến chống thực dân Pháp (1945 –1954)</h3>
                         <h4
                             style={{
@@ -200,7 +200,7 @@ function Course5() {
                         href="https://howtolovevietnam.netlify.app/elearningsection/historycourse1/course3/watch-video1"
                     >
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (8).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (8).png" alt="" />
                         <h3>Bài 8. Cuộc kháng chiến chống Mỹ, cứu nước (1954 – 1975)</h3>
                         <h4
                             style={{
@@ -217,7 +217,7 @@ function Course5() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (9).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (9).png" alt="" />
                         <h3>
                             Bài 9. Đấu tranh bảo vệ Tổ quốc từ sau tháng 4 – 1975 đến nay. Một số bài học lịch sử của
                             các cuộc kháng chiến bảo vệ Tổ quốc từ năm 1945 đến nay

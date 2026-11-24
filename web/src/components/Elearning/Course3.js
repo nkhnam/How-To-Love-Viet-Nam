@@ -43,7 +43,7 @@ function Course3() {
                 <div class="row">
                     <div class="column">
                         <div class="thumb">
-                            <img src="./Img/thumb-1.png" alt="" />
+                            <img src="/Img/thumb-1.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ function Course3() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (1).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (1).png" alt="" />
                         <h3>Bài 1: Hiện thực lịch sử và nhận thức lịch sử</h3>
                         <h4
                             style={{
@@ -85,7 +85,7 @@ function Course3() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (2).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (2).png" alt="" />
                         <h3>Bài 2: Vai trò của Sử học</h3>
                         <h4
                             style={{
@@ -102,7 +102,7 @@ function Course3() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (3).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (3).png" alt="" />
                         <h3>Bài 3: Khái niệm văn minh</h3>
                         <h4
                             style={{
@@ -123,7 +123,7 @@ function Course3() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (4).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (4).png" alt="" />
                         <h3>Bài 4: Văn minh Ai Cập thời cổ đại</h3>
                         <h4
                             style={{
@@ -140,7 +140,7 @@ function Course3() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (5).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (5).png" alt="" />
                         <h3>Bài 5: Văn minh Trung Hoa thời cổ - trung đại</h3>
                         <h4
                             style={{
@@ -160,7 +160,7 @@ function Course3() {
                         href="https://howtolovevietnam.netlify.app/elearningsection/historycourse1/course6/watch-video1"
                     >
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (6).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (6).png" alt="" />
                         <h3>Bài 6: Văn minh Ấn độ cổ - trung đại</h3>
                         <h4
                             style={{

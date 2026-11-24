@@ -58,7 +58,7 @@ const FeaturePages = () => {
                             <div className='menu-item'>
                                 {userDetails && (
                                     <Link className='blog-profile' to="/profile">
-                                        <img src={userDetails.photo || './logo192.png'} alt="User Avatar" className="user-avatar" />
+                                        <img src={userDetails.photo || '/logo192.png'} alt="User Avatar" className="user-avatar" />
                                         <span className='displayName'>Chào mừng bạn, {userDetails.firstName}</span>
                                     </Link>
                                 )}

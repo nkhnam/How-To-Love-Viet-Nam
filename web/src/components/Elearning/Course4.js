@@ -43,7 +43,7 @@ function Course4() {
                 <div class="row">
                     <div class="column">
                         <div class="thumb">
-                            <img src="./Img/thumb-2.png" alt="" />
+                            <img src="/Img/thumb-2.png" alt="" />
                             <span>6 bài học</span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ function Course4() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (1).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (1).png" alt="" />
                         <h3>Bài 1: Một số vấn đề chung về cách mạng tư sản</h3>
                         <h4
                             style={{
@@ -85,7 +85,7 @@ function Course4() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (2).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (2).png" alt="" />
                         <h3>Bài 2: Sự xác lập và phát triển của chủ nghĩa tư bản</h3>
                         <h4
                             style={{
@@ -102,7 +102,7 @@ function Course4() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (3).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (3).png" alt="" />
                         <h3>Bài 3: Sự hình thành Liên bang Cộng hòa xã hội chủ nghĩa Xô Viết</h3>
                         <h4
                             style={{
@@ -123,7 +123,7 @@ function Course4() {
                 <div class="box-container">
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (4).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (4).png" alt="" />
                         <h3>Bài 4: Sự phát triển của chủ nghĩa tư bản từ sau chiến tranh thế giới thứ 2 đến nay</h3>
                         <h4
                             style={{
@@ -140,7 +140,7 @@ function Course4() {
 
                     <Link class="box" to="">
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (5).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (5).png" alt="" />
                         <h3>Bài 5: Quá trình xâm lược và cai trị của chủ nghĩa thực dân ở Đông Nam Á</h3>
                         <h4
                             style={{
@@ -160,7 +160,7 @@ function Course4() {
                         href="https://howtolovevietnam.netlify.app/elearningsection/historycourse1/course5/watch-video1"
                     >
                         <i class="fas fa-play"></i>
-                        <img src="./Img/Lịch Sử bài 1 (6).png" alt="" />
+                        <img src="/Img/Lịch Sử bài 1 (6).png" alt="" />
                         <h3>Bài 6: Hành trình đi đến độc lập dân tộc ở Đông Nam Á</h3>
                         <h4
                             style={{
