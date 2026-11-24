@@ -1,624 +1,808 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { db } from '../firebase'; // Import Firebase configuration
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, updateDoc, arrayUnion, addDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { auth } from '../firebase'; // Make sure you have configured Firebase Auth in your firebase.js
 import DOMPurify from 'dompurify';
-import './quiz.css';
-import correct from './right.m4a';
-import wrong from './wrong.m4a';
-import { Link } from 'react-router-dom';
+import {
+  X,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+  Volume2,
+  VolumeX,
+  Lightbulb,
+  Trophy,
+  RotateCcw,
+  Keyboard,
+  Play,
+  LogIn,
+} from 'lucide-react';
+import { db, auth } from '../firebase';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
+import Card from '../ui/Card';
+import { getQuizMeta } from '../../data/quizMeta';
+import correctSoundFile from './right.m4a';
+import wrongSoundFile from './wrong.m4a';
 
+const WELCOME_IMAGES = ['/Img/eddy.png', '/Img/junior.png', '/Img/bear.png', '/Img/lily.png'];
+const MUTE_KEY = 'htlvn_quiz_muted';
+
+function isAnswerRight(question, userAnswer) {
+  if (!question) return false;
+  if (question.type === 'multipleChoice') {
+    return userAnswer === question.correctOptionIndex;
+  }
+  return (
+    typeof userAnswer === 'string' &&
+    typeof question.blankAnswer === 'string' &&
+    userAnswer.trim().toLowerCase() === question.blankAnswer.trim().toLowerCase()
+  );
+}
+
+/**
+ * Distraction-free Focus Quiz Runner with keyboard shortcuts, audio mute toggle,
+ * inline explanation card, guest-play support, and Result Summary + Answer Review screen.
+ */
 function ShowQuiz() {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const [quiz, setQuiz] = useState(null); // Set the quiz
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // Set the question that users are in
-    const [selectedOption, setSelectedOption] = useState(null); // The answer index that user choose (FITB)
-    const [showResult, setShowResult] = useState(false); // Set show the result
-    const [isCorrect, setIsCorrect] = useState(null); // Check the answer (MC & FITB)
-    const [activeIndex, setActiveIndex] = useState(null); // The answer index that user choose (MC
-    const [userAnswers, setUserAnswers] = useState([]); // Store user answers include FITB and MC
-    const [showModal, setShowModal] = useState(false); // Set the explain box
-    const [blankAnswer, setBlankAnswer] = useState(''); // Get the answert for fill in the blank
-    const [isIntro, setIsIntro] = useState(true); // Find and create intro page
-    const [randomImage, setRandomImage] = useState(''); //Random welcome Img
-    const [correctCount, setCorrectCount] = useState(0); // Track correct answers
-    const [resultDocId, setResultDocId] = useState(null); // Track the result document ID
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-    const handleModalClose = () => {
-        setShowModal(false);
+  const [quiz, setQuiz] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState('intro'); // 'intro' | 'playing' | 'summary'
+  const [questionPool, setQuestionPool] = useState([]);
+  const [isRetryWrongMode, setIsRetryWrongMode] = useState(false);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [blankAnswer, setBlankAnswer] = useState('');
+  const [checkedCurrent, setCheckedCurrent] = useState(false);
+  const [isCurrentCorrect, setIsCurrentCorrect] = useState(false);
+  const [userAnswers, setUserAnswers] = useState([]);
+
+  const [resultDocId, setResultDocId] = useState(null);
+  const [savedToCloud, setSavedToCloud] = useState(false);
+  const [muted, setMuted] = useState(() => localStorage.getItem(MUTE_KEY) === 'true');
+  const hasInteractedRef = useRef(false);
+
+  const mascotImage = useMemo(
+    () => WELCOME_IMAGES[Math.floor(Math.random() * WELCOME_IMAGES.length)],
+    [],
+  );
+
+  useEffect(() => {
+    const markInteracted = () => {
+      hasInteractedRef.current = true;
     };
-
-    const handleShowAnswer = () => {
-        setShowModal(true);
+    window.addEventListener('pointerdown', markInteracted, { once: true });
+    window.addEventListener('keydown', markInteracted, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', markInteracted);
+      window.removeEventListener('keydown', markInteracted);
     };
+  }, []);
 
-    const welcomeImages = [
-        '/Img/eddy.png',
-        '/Img/junior.png',
-        '/Img/bear.png',
-        '/Img/lily.png',
-
-        // Thêm các liên kết ảnh khác tại đây
-    ];
-
-    useEffect(() => {
-        const saveStateToLocalStorage = () => {
-            const state = {
-                currentQuestionIndex,
-                userAnswers,
-                showResult,
-                isCorrect,
-                isIntro,
-            };
-            localStorage.setItem(`quizState_${id}`, JSON.stringify(state));
-        };
-
-        window.addEventListener('beforeunload', saveStateToLocalStorage);
-        return () => {
-            window.removeEventListener('beforeunload', saveStateToLocalStorage);
-        };
-    }, [currentQuestionIndex, userAnswers, showResult, isCorrect, isIntro, id]);
-
-    useEffect(() => {
-        const fetchQuiz = async () => {
-            const docRef = doc(db, 'quizzes', id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setQuiz(docSnap.data());
-            } else {
-                console.error('No such document!');
-            }
-        };
-
-        const loadStateFromLocalStorage = () => {
-            const savedState = JSON.parse(localStorage.getItem(`quizState_${id}`));
-            if (savedState) {
-                setCurrentQuestionIndex(savedState.currentQuestionIndex);
-                setUserAnswers(savedState.userAnswers);
-                setShowResult(savedState.showResult);
-                setIsCorrect(savedState.isCorrect);
-                setIsIntro(savedState.isIntro);
-                if (savedState.userAnswers[savedState.currentQuestionIndex] !== undefined) {
-                    setSelectedOption(savedState.userAnswers[savedState.currentQuestionIndex]);
-                    setActiveIndex(savedState.userAnswers[savedState.currentQuestionIndex]);
-                    if (quiz && quiz.questions[savedState.currentQuestionIndex].type === 'fillInTheBlank') {
-                        setBlankAnswer(savedState.userAnswers[savedState.currentQuestionIndex]);
-                    }
-                }
-            }
-        };
-
-        fetchQuiz().then(loadStateFromLocalStorage);
-    }, [id]);
-
-    // Fetch existing result document for the user and quiz
-    useEffect(() => {
-        const fetchResultDocument = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                const resultsRef = collection(db, 'results');
-                const q = query(resultsRef, where('userId', '==', user.uid), where('quizId', '==', id));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const docSnapshot = querySnapshot.docs[0];
-                    setResultDocId(docSnapshot.id);
-                }
-            }
-        };
-        fetchResultDocument();
-    }, [id]);
-
-    const currentQuestion = quiz ? quiz.questions[currentQuestionIndex] : null;
-
-    useEffect(() => {
-        if (currentQuestion) {
-            if (userAnswers[currentQuestionIndex] !== undefined) {
-                setSelectedOption(userAnswers[currentQuestionIndex]);
-                setActiveIndex(userAnswers[currentQuestionIndex]);
-                if (currentQuestion.type === 'fillInTheBlank') {
-                    setBlankAnswer(userAnswers[currentQuestionIndex]);
-                }
-            } else {
-                setSelectedOption(null);
-                setActiveIndex(null);
-                if (currentQuestion.type === 'fillInTheBlank') {
-                    setBlankAnswer('');
-                }
-            }
+  useEffect(() => {
+    let active = true;
+    const loadQuizAndResult = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, 'quizzes', id));
+        if (!active) return;
+        if (!docSnap.exists()) {
+          setQuiz(null);
+          setLoading(false);
+          return;
         }
-    }, [currentQuestionIndex, userAnswers, currentQuestion]);
+        const data = docSnap.data();
+        const questions = Array.isArray(data.questions) ? data.questions : [];
+        setQuiz(data);
+        setQuestionPool(questions);
 
-    useEffect(() => {
-        const setUserHasInteracted = () => {
-            document.userHasInteracted = true;
-        };
-
-        window.addEventListener('click', setUserHasInteracted);
-        window.addEventListener('keydown', setUserHasInteracted);
-
-        return () => {
-            window.removeEventListener('click', setUserHasInteracted);
-            window.removeEventListener('keydown', setUserHasInteracted);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (showResult !== null) {
-            if (isCorrect !== null) {
-                isCorrect ? correctSound() : wrongSound();
+        const savedRaw = localStorage.getItem(`quizState_${id}`);
+        if (savedRaw) {
+          try {
+            const saved = JSON.parse(savedRaw);
+            if (Array.isArray(saved.userAnswers) && saved.currentQuestionIndex < questions.length) {
+              setUserAnswers(saved.userAnswers);
+              setCurrentIndex(saved.currentQuestionIndex || 0);
+              if (saved.isIntro === false) {
+                setPhase('playing');
+              }
             }
+          } catch {
+            // Ignore malformed local draft
+          }
         }
-    }, [showResult, isCorrect]);
-
-    useEffect(() => {
-        const randomIndex = Math.floor(Math.random() * welcomeImages.length);
-        setRandomImage(welcomeImages[randomIndex]);
-    }, []);
-
-    const correctSound = () => {
-        const correctAudio = new Audio(correct);
-        if (document.userHasInteracted) correctAudio.play();
+      } catch (err) {
+        console.error('Failed to load quiz:', err);
+      } finally {
+        if (active) setLoading(false);
+      }
     };
-
-    const wrongSound = () => {
-        const wrongAudio = new Audio(wrong);
-        if (document.userHasInteracted) wrongAudio.play();
+    loadQuizAndResult();
+    return () => {
+      active = false;
     };
+  }, [id]);
 
-    if (!quiz) {
-        return <div>Loading...</div>;
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        setResultDocId(null);
+        return;
+      }
+      try {
+        const q = query(collection(db, 'results'), where('userId', '==', user.uid), where('quizId', '==', id));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          setResultDocId(snap.docs[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load prior result doc:', err);
+      }
+    });
+    return () => unsubscribe();
+  }, [id]);
+
+  useEffect(() => {
+    if (!quiz || isRetryWrongMode || phase !== 'playing') return;
+    localStorage.setItem(
+      `quizState_${id}`,
+      JSON.stringify({
+        currentQuestionIndex: currentIndex,
+        userAnswers,
+        isIntro: false,
+      }),
+    );
+  }, [id, quiz, phase, currentIndex, userAnswers, isRetryWrongMode]);
+
+  const currentQuestion = questionPool[currentIndex] || null;
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    const saved = userAnswers[currentIndex];
+    if (saved !== undefined) {
+      if (currentQuestion.type === 'multipleChoice') {
+        setSelectedOption(saved);
+      } else {
+        setBlankAnswer(String(saved));
+      }
+      setCheckedCurrent(true);
+      setIsCurrentCorrect(isAnswerRight(currentQuestion, saved));
+    } else {
+      setSelectedOption(null);
+      setBlankAnswer('');
+      setCheckedCurrent(false);
+      setIsCurrentCorrect(false);
     }
+  }, [currentIndex, currentQuestion, userAnswers]);
 
-    const handleItemClick = (index) => {
-        if (!showResult) {
-            setActiveIndex(index);
-            setSelectedOption(index);
-        }
-    };
+  const toggleMute = () => {
+    setMuted((prev) => {
+      const next = !prev;
+      localStorage.setItem(MUTE_KEY, String(next));
+      return next;
+    });
+  };
 
-    const handleOptionChange = (index) => {
-        setSelectedOption(index);
-    };
+  const playFeedbackSound = useCallback(
+    (right) => {
+      if (muted || !hasInteractedRef.current) return;
+      try {
+        const audio = new Audio(right ? correctSoundFile : wrongSoundFile);
+        audio.play().catch(() => {});
+      } catch {
+        // Ignore audio errors
+      }
+    },
+    [muted],
+  );
 
-    const handleBlankChange = (e) => {
-        setBlankAnswer(e.target.value);
-    };
+  const persistCompletion = useCallback(
+    async (finalAnswers) => {
+      if (isRetryWrongMode) return;
+      localStorage.removeItem(`quizState_${id}`);
+      const user = auth.currentUser;
+      if (!user || !quiz) return;
 
-    const handleButtonClick = async () => {
-        if (isIntro) {
-            setIsIntro(false);
-        } else if (!showResult) {
-            if (currentQuestion.type === 'multipleChoice') {
-                if (selectedOption === null) return;
-                const correctIndex = quiz.questions[currentQuestionIndex].correctOptionIndex;
-                const isCorrectAnswer = selectedOption === correctIndex;
-                setIsCorrect(isCorrectAnswer);
-                if (isCorrectAnswer) setCorrectCount(correctCount + 1);
-                const updatedAnswers = [...userAnswers];
-                updatedAnswers[currentQuestionIndex] = selectedOption;
-                setUserAnswers(updatedAnswers);
-            } else if (currentQuestion.type === 'fillInTheBlank') {
-                const isCorrectAnswer =
-                    blankAnswer.trim().toLowerCase() === currentQuestion.blankAnswer.trim().toLowerCase();
-                setIsCorrect(isCorrectAnswer);
-                if (isCorrectAnswer) setCorrectCount(correctCount + 1);
-                const updatedAnswers = [...userAnswers];
-                updatedAnswers[currentQuestionIndex] = blankAnswer;
-                setUserAnswers(updatedAnswers);
-            }
-            setShowResult(true);
-            setShowModal(false);
+      const totalQuestions = questionPool.length;
+      const finalCorrectCount = questionPool.reduce(
+        (sum, q, idx) => sum + (isAnswerRight(q, finalAnswers[idx]) ? 1 : 0),
+        0,
+      );
+
+      try {
+        await updateDoc(doc(db, 'quizzes', id), {
+          completedBy: arrayUnion(user.uid),
+        });
+        const payload = {
+          userId: user.uid,
+          quizId: id,
+          userAnswers: finalAnswers,
+          correctCount: finalCorrectCount,
+          totalQuestions,
+          timestamp: new Date(),
+        };
+        if (resultDocId) {
+          await updateDoc(doc(db, 'results', resultDocId), payload);
         } else {
-            setShowResult(false);
-            setIsCorrect(null);
-            setShowModal(false);
-            setActiveIndex(null);
-            setBlankAnswer('');
-            if (currentQuestionIndex < quiz.questions.length - 1) {
-                setCurrentQuestionIndex(currentQuestionIndex + 1);
-            } else {
-                console.log('Quiz completed');
-                // Get the current user
-                const user = auth.currentUser;
-                if (user) {
-                    try {
-                        const quizRef = doc(db, 'quizzes', id);
-                        await updateDoc(quizRef, {
-                            completedBy: arrayUnion(user.uid),
-                        });
-                        // Check if result document exists
-                        if (resultDocId) {
-                            const resultRef = doc(db, 'results', resultDocId);
-                            await updateDoc(resultRef, {
-                                userAnswers,
-                                correctCount,
-                                totalQuestions: quiz.questions.length,
-                                timestamp: new Date(),
-                            });
-                        } else {
-                            const resultRef = collection(db, 'results');
-                            await addDoc(resultRef, {
-                                userId: user.uid,
-                                quizId: id,
-                                userAnswers,
-                                correctCount,
-                                totalQuestions: quiz.questions.length,
-                                timestamp: new Date(),
-                            });
-                        }
-
-                        setResultDocId(null); // Reset result document ID
-                    } catch (error) {
-                        console.error('Error updating result document: ', error);
-                    }
-                } else {
-                    console.error('No user is signed in.');
-                }
-
-                setCurrentQuestionIndex(0);
-                setSelectedOption(null);
-                setUserAnswers([]);
-                setCorrectCount(0);
-                localStorage.removeItem(`quizState_${id}`);
-                navigate('/listquiz');
-            }
+          const created = await addDoc(collection(db, 'results'), payload);
+          setResultDocId(created.id);
         }
-    };
+        setSavedToCloud(true);
+      } catch (err) {
+        console.error('Failed to save quiz score:', err);
+      }
+    },
+    [id, isRetryWrongMode, questionPool, quiz, resultDocId],
+  );
 
-    const handleBackProgressBack = () => {
-        window.location.reload();
-        navigate(-1);
-    };
+  const handleCheckOrNext = useCallback(async () => {
+    if (!currentQuestion) return;
 
-    const handleBackButtonClick = () => {
-        if (currentQuestionIndex > 0) {
-            const prevQuestionIndex = currentQuestionIndex - 1;
-            const prevQuestion = quiz.questions[prevQuestionIndex];
-            const prevAnswer = userAnswers[prevQuestionIndex];
+    if (!checkedCurrent) {
+      if (currentQuestion.type === 'multipleChoice' && selectedOption === null) return;
+      if (currentQuestion.type === 'fillInTheBlank' && blankAnswer.trim() === '') return;
 
-            setShowResult(true);
+      const answerVal = currentQuestion.type === 'multipleChoice' ? selectedOption : blankAnswer.trim();
+      const right = isAnswerRight(currentQuestion, answerVal);
+      const nextAnswers = [...userAnswers];
+      nextAnswers[currentIndex] = answerVal;
 
-            if (prevQuestion.type === 'multipleChoice') {
-                const correctIndex = prevQuestion.correctOptionIndex;
-                setIsCorrect(prevAnswer === correctIndex);
-            } else if (prevQuestion.type === 'fillInTheBlank') {
-                setIsCorrect(prevAnswer.trim().toLowerCase() === prevQuestion.blankAnswer.trim().toLowerCase());
-                setBlankAnswer(prevAnswer);
-            }
-
-            setCurrentQuestionIndex(prevQuestionIndex);
-            setSelectedOption(prevAnswer);
-            setActiveIndex(prevAnswer);
-        }
-    };
-
-    const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
-    const progressSpecial = (currentQuestionIndex / quiz.questions.length) * 100;
-
-    const correctAnswer =
-        currentQuestion?.type === 'multipleChoice'
-            ? currentQuestion.options[currentQuestion.correctOptionIndex]
-            : currentQuestion.blankAnswer;
-
-    let footerBackgroundColor = 'white';
-    let footerBorder = '1px solid rgb(210, 211, 217)';
-    if (showResult) {
-        footerBackgroundColor = isCorrect ? '#ebf3ee' : '#fcebe7';
-        footerBorder = 'none';
+      setUserAnswers(nextAnswers);
+      setIsCurrentCorrect(right);
+      setCheckedCurrent(true);
+      playFeedbackSound(right);
+      return;
     }
 
-    if (isIntro) {
-        return (
-            <div className="quiz-container">
-                <div className="header-progress">
-                    <Link to="#" onClick={handleBackProgressBack} style={{ color: '#292929' }}>
-                        <div className="back-logo">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                fill="currentColor"
-                                className="bi bi-arrow-left"
-                                viewBox="0 0 16 16"
-                            >
-                                <path
-                                    fillRule="evenodd"
-                                    d="M15 8a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 7.5H14.5a.5.5 0 0 1 .5.5z"
-                                />
-                            </svg>
-                        </div>
-                    </Link>
-                    <div className="progress-container">
-                        <div className="progress-bar" style={{ width: `${progressSpecial}%` }}></div>
-                    </div>
+    if (currentIndex < questionPool.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    } else {
+      await persistCompletion(userAnswers);
+      setPhase('summary');
+    }
+  }, [
+    blankAnswer,
+    checkedCurrent,
+    currentIndex,
+    currentQuestion,
+    persistCompletion,
+    playFeedbackSound,
+    questionPool.length,
+    selectedOption,
+    userAnswers,
+  ]);
+
+  // Keyboard shortcuts: 1-4 or A-D select option; Enter checks or goes next
+  useEffect(() => {
+    if (phase !== 'playing' || !currentQuestion) return undefined;
+    const handleKeyDown = (e) => {
+      const tag = e.target?.tagName?.toLowerCase();
+      const isTextInput = tag === 'input' || tag === 'textarea';
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleCheckOrNext();
+        return;
+      }
+
+      if (isTextInput || checkedCurrent || currentQuestion.type !== 'multipleChoice') return;
+      const keyMap = { '1': 0, '2': 1, '3': 2, '4': 3, a: 0, b: 1, c: 2, d: 3 };
+      const idx = keyMap[e.key.toLowerCase()];
+      if (idx !== undefined && idx < (currentQuestion.options?.length || 0)) {
+        hasInteractedRef.current = true;
+        setSelectedOption(idx);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [phase, currentQuestion, checkedCurrent, handleCheckOrNext]);
+
+  const handleRestartAll = () => {
+    const all = Array.isArray(quiz?.questions) ? quiz.questions : [];
+    setQuestionPool(all);
+    setIsRetryWrongMode(false);
+    setUserAnswers([]);
+    setCurrentIndex(0);
+    setSavedToCloud(false);
+    localStorage.removeItem(`quizState_${id}`);
+    setPhase('playing');
+  };
+
+  const handleRetryWrong = () => {
+    const wrongOnes = questionPool.filter((q, idx) => !isAnswerRight(q, userAnswers[idx]));
+    if (wrongOnes.length === 0) return;
+    setQuestionPool(wrongOnes);
+    setIsRetryWrongMode(true);
+    setUserAnswers([]);
+    setCurrentIndex(0);
+    setPhase('playing');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-heritage-cream text-heritage-muted text-sm font-medium">
+        Đang tải bài Quiz...
+      </div>
+    );
+  }
+
+  if (!quiz || !quiz.questions?.length) {
+    return (
+      <div className="min-h-screen bg-heritage-cream flex items-center justify-center p-6">
+        <Card className="max-w-md w-full text-center space-y-4">
+          <h1 className="font-serif text-2xl font-bold text-heritage-ink">Không tìm thấy bộ Quiz</h1>
+          <p className="text-sm text-heritage-muted">Bộ Quiz này không tồn tại hoặc chưa có câu hỏi nào.</p>
+          <Button to="/listquiz" variant="primary">
+            Quay lại kho Quiz
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  const meta = getQuizMeta(quiz.type);
+
+  // 1. INTRO SCREEN
+  if (phase === 'intro') {
+    const hasDraft = userAnswers.length > 0 && userAnswers.some((a) => a !== undefined);
+    return (
+      <div className="min-h-screen bg-heritage-cream flex flex-col">
+        <header className="h-16 px-4 sm:px-6 border-b border-heritage-border bg-white flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate('/listquiz')}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-heritage-muted hover:text-heritage-ink cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kho Quiz</span>
+          </button>
+          <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
+          <Card className="max-w-2xl w-full p-6 sm:p-10 space-y-6">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <img
+                src={mascotImage}
+                alt="Linh vật HTLVN"
+                className="w-28 h-28 sm:w-32 sm:h-32 object-contain shrink-0"
+              />
+              <div className="text-center sm:text-left space-y-2">
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                  <Badge variant="gold">{quiz.questions.length} câu hỏi</Badge>
+                  <Badge variant="neutral">Tác giả: {quiz.author?.name || 'HTLVN'}</Badge>
                 </div>
-                <div
-                    className="quiz-body-section"
-                    style={{ display: 'flex', flexDirection: 'row-reverse', marginTop: '80px' }}
-                >
-                    <div className="flex-welcomeImg" style={{ marginLeft: '12px' }}>
-                        <h2 style={{ fontSize: '36px', maxWidth: '', color: '#292929' }}>{quiz.title}</h2>
-                        <p style={{ fontSize: '24px', maxWidth: '', color: '#292929', fontStyle: 'italic' }}>
-                            {quiz.description}
-                        </p>
-                    </div>
-                    <img
-                        className="boy-welcomeImg"
-                        src={randomImage}
-                        alt=""
-                        style={{ width: '140px', height: '100%' }}
-                    />
-                </div>
-                <footer
-                    className="quiz-footer"
-                    style={{ backgroundColor: footerBackgroundColor, border: footerBorder }}
-                >
-                    <div className="quiz-footer-container" style={{ float: 'right' }}>
-                        <button className="dol-button special-dol-red" onClick={handleButtonClick}>
-                            Bắt đầu nào!
-                        </button>
-                    </div>
-                </footer>
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-heritage-ink leading-tight">
+                  {quiz.title}
+                </h1>
+                {quiz.description && <p className="text-sm sm:text-base text-heritage-muted">{quiz.description}</p>}
+              </div>
             </div>
-        );
+
+            <div className="rounded-xl bg-heritage-paper border border-heritage-border px-4 py-3 flex items-center gap-3 text-xs sm:text-sm text-heritage-muted">
+              <Keyboard className="w-4 h-4 text-heritage-vermilion shrink-0" />
+              <span>
+                Mẹo làm nhanh: Dùng phím <strong className="text-heritage-ink">1–4</strong> (hoặc{' '}
+                <strong className="text-heritage-ink">A–D</strong>) để chọn đáp án và{' '}
+                <strong className="text-heritage-ink">Enter</strong> để kiểm tra / chuyển câu.
+              </span>
+            </div>
+
+            {!auth.currentUser && (
+              <p className="text-xs text-heritage-muted text-center sm:text-left">
+                * Bạn đang làm với tư cách khách; vẫn xem được toàn bộ đáp án &amp; giải thích, hoặc{' '}
+                <Link to="/login" className="font-semibold text-heritage-vermilion hover:underline">
+                  đăng nhập
+                </Link>{' '}
+                để lưu kết quả.
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+              {hasDraft && (
+                <Button variant="outline" onClick={handleRestartAll}>
+                  <RotateCcw className="w-4 h-4" />
+                  Làm lại từ đầu
+                </Button>
+              )}
+              <Button variant="primary" size="lg" onClick={() => setPhase('playing')}>
+                <Play className="w-4 h-4" />
+                {hasDraft ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài'}
+              </Button>
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  // 2. RESULT SUMMARY & ANSWER REVIEW SCREEN
+  if (phase === 'summary') {
+    const total = questionPool.length;
+    const correctTotal = questionPool.reduce((sum, q, idx) => sum + (isAnswerRight(q, userAnswers[idx]) ? 1 : 0), 0);
+    const wrongTotal = total - correctTotal;
+    const percent = total > 0 ? Math.round((correctTotal / total) * 100) : 0;
+
+    let heading = 'Cố gắng thêm nhé!';
+    let subtext = 'Hãy xem lại phần giải thích từng câu bên dưới và thử ôn lại câu sai.';
+    if (percent >= 80) {
+      heading = 'Xuất sắc! Hoàn thành ấn tượng';
+      subtext = 'Bạn đã nắm rất chắc kiến thức trọng tâm của chuyên đề này.';
+    } else if (percent >= 50) {
+      heading = 'Làm tốt lắm!';
+      subtext = 'Bạn đã đi qua phần lớn câu hỏi, hãy ôn lại các câu còn nhầm để đạt điểm tối đa.';
     }
 
     return (
-        <>
-            <div className="quiz-container">
-                <div className="header-progress">
-                    <Link to="#" onClick={handleBackProgressBack} style={{ color: '#292929' }}>
-                        <div className="back-logo">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                width="1em"
-                                height="1em"
-                                data-testid="SvgComponent"
-                                className="quiz-close"
-                            >
-                                <path
-                                    fill="currentColor"
-                                    fillRule="evenodd"
-                                    d="M6.226 4.811A1 1 0 004.81 6.225L10.586 12l-5.774 5.775a1 1 0 101.414 1.414L12 13.414l5.775 5.775a1 1 0 001.414-1.414L13.415 12l5.774-5.775a1 1 0 10-1.414-1.414L12 10.586 6.226 4.81z"
-                                    clipRule="evenodd"
-                                ></path>
-                            </svg>
-                        </div>
-                    </Link>
+      <div className="min-h-screen bg-heritage-cream">
+        <header className="h-16 px-4 sm:px-6 border-b border-heritage-border bg-white flex items-center justify-between">
+          <Link
+            to="/listquiz"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-heritage-muted hover:text-heritage-ink"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Về kho Quiz</span>
+          </Link>
+          <span className="text-sm font-bold text-heritage-ink truncate max-w-[60%]">{quiz.title}</span>
+          <div />
+        </header>
 
-                    <div className="progress-container">
-                        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-                    </div>
-                </div>
-                <div className="quiz-body-section">
-                    <h1 className="quiz-title">{quiz.title}</h1>
-                    <div>
-                        {currentQuestion.type === 'multipleChoice' && (
-                            <>
-                                <h2 className="quiz-question">{currentQuestion.question}</h2>
-                                <div className="multiple-choice-container">
-                                    <div className="multiple-choice-wrapped">
-                                        {currentQuestion.options.map((option, index) => {
-                                            const correctIndex =
-                                                quiz.questions[currentQuestionIndex].correctOptionIndex;
-                                            const isCorrectOption = showResult && index === correctIndex;
-                                            const isIncorrectOption =
-                                                showResult && selectedOption === index && index !== correctIndex;
-
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className={`multiple-choice-item ${
-                                                        isCorrectOption ? 'correct' : ''
-                                                    } ${isIncorrectOption ? 'incorrect' : ''} ${
-                                                        index === activeIndex ? 'active' : ''
-                                                    }`}
-                                                    onClick={() => handleItemClick(index)}
-                                                >
-                                                    <div className="multiple-choice-item-wrapped">
-                                                        <label
-                                                            htmlFor={`option${index}`}
-                                                            className={`label-style ${
-                                                                index === activeIndex ||
-                                                                (showResult && selectedOption === index)
-                                                                    ? 'label-style-active'
-                                                                    : ''
-                                                            }`}
-                                                        >
-                                                            <input
-                                                                style={{ display: 'none' }}
-                                                                type="radio"
-                                                                id={`option${index}`}
-                                                                name="option"
-                                                                value={index}
-                                                                checked={selectedOption === index}
-                                                                onChange={() => handleOptionChange(index)}
-                                                                disabled={showResult}
-                                                            />
-                                                            <div
-                                                                className={`number-option ${
-                                                                    index === activeIndex ||
-                                                                    (showResult && selectedOption === index)
-                                                                        ? 'active-option'
-                                                                        : ''
-                                                                }`}
-                                                            >
-                                                                {String.fromCharCode(65 + index)}
-                                                            </div>
-                                                            <div className="option-style">{option}</div>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        {currentQuestion.type === 'fillInTheBlank' && (
-                            <>
-                                <h2 className="quiz-question">Điền vào chỗ trống</h2>
-                                <h2
-                                    className="quiz-question"
-                                    style={{ fontSize: '24px', fontWeight: '600', marginTop: '16px' }}
-                                >
-                                    {currentQuestion.question}
-                                </h2>
-                                <div className="fill-in-the-blank-container">
-                                    <input
-                                        style={{ marginTop: '16px', fontSize: '18px', backgroundColor: 'white' }}
-                                        type="text"
-                                        className="input-effect"
-                                        placeholder="Điền vào chỗ trống"
-                                        value={blankAnswer}
-                                        onChange={handleBlankChange}
-                                        disabled={showResult}
-                                    />
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
+          <Card className="p-6 sm:p-8 flex flex-col md:flex-row items-center gap-8">
+            {/* Score ring */}
+            <div className="relative w-36 h-36 shrink-0 flex items-center justify-center">
+              <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#F5EFE6" strokeWidth="10" />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke={percent >= 70 ? '#0F766E' : '#B91C1C'}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={326.7}
+                  strokeDashoffset={326.7 - (326.7 * percent) / 100}
+                />
+              </svg>
+              <div className="absolute text-center">
+                <p className="font-serif text-3xl font-bold text-heritage-ink">{percent}%</p>
+                <p className="text-xs font-semibold text-heritage-muted">
+                  {correctTotal}/{total} đúng
+                </p>
+              </div>
             </div>
-            <footer className="quiz-footer" style={{ backgroundColor: footerBackgroundColor, border: footerBorder }}>
-                <div className="quiz-footer-container">
-                    {showResult && (
-                        <div className="check-container">
-                            <img
-                                src={
-                                    isCorrect
-                                        ? 'https://th.bing.com/th/id/R.85c14dfeb8edd88f62b5bbfe671f0108?rik=T38yCB6ZWsrEdA&riu=http%3a%2f%2fclipart-library.com%2fimages_k%2fgreen-checkmark-transparent%2fgreen-checkmark-transparent-17.png&ehk=XzHgRYQ3s7cSIB3YzfqPKv4s787lzN9vDBRhCfmVfH0%3d&risl=&pid=ImgRaw&r=0'
-                                        : 'https://cdn3.iconfinder.com/data/icons/simple-web-navigation/165/cross-512.png'
-                                }
-                                alt=""
-                                className="check-icon"
-                            />
-                            <p style={{ color: isCorrect ? 'green' : 'rgb(222, 53, 11)' }} className="check-text">
-                                {isCorrect ? 'Chính xác' : 'Sai mất rồi'}
-                            </p>
-                        </div>
-                    )}
 
-                    <div className="show-explain">
-                        {currentQuestionIndex > 0 && !showResult && (
-                            <div className="back-quiz-button" onClick={handleBackButtonClick}>
-                                <div className="back-quiz-button-wrapped">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        width="1em"
-                                        height="1em"
-                                        fontSize="24"
-                                        data-testid="SvgComponent"
-                                        className="back-arrow"
-                                    >
-                                        <path
-                                            fill="currentColor"
-                                            fillRule="evenodd"
-                                            d="M20.329 11v2H7.5l3.243 3.243-1.414 1.414L3.672 12l5.657-5.657 1.414 1.414L7.5 11h12.83z"
-                                            clipRule="evenodd"
-                                        ></path>
-                                    </svg>
-                                </div>
-                            </div>
-                        )}
+            <div className="flex-1 text-center md:text-left space-y-3">
+              <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                <Badge variant="gold">
+                  <Trophy className="w-3.5 h-3.5" />
+                  {isRetryWrongMode ? 'Chế độ ôn câu sai' : 'Kết quả bài làm'}
+                </Badge>
+                {savedToCloud && (
+                  <Badge variant="jade">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Đã lưu vào Hồ sơ
+                  </Badge>
+                )}
+              </div>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-heritage-ink">{heading}</h1>
+              <p className="text-sm sm:text-base text-heritage-muted">{subtext}</p>
 
-                        {showResult && (
-                            <>
-                                {showModal && (
-                                    <div className="modal">
-                                        <div className="modal-content">
-                                            <div className="modal-body">
-                                                <span className="close" onClick={handleModalClose}>
-                                                    &times;
-                                                </span>
-                                                <h2 className="explain-modal-title">✏️ Câu hỏi và đáp án</h2>
-                                                <p style={{ marginBottom: '8px', fontSize: '18px' }}>
-                                                    {currentQuestion.question}
-                                                </p>
-                                                <div className="correct-answer">
-                                                    <p>
-                                                        <img
-                                                            src="https://th.bing.com/th/id/R.85c14dfeb8edd88f62b5bbfe671f0108?rik=T38yCB6ZWsrEdA&riu=http%3a%2f%2fclipart-library.com%2fimages_k%2fgreen-checkmark-transparent%2fgreen-checkmark-transparent-17.png&ehk=XzHgRYQ3s7cSIB3YzfqPKv4s787lzN9vDBRhCfmVfH0%3d&risl=&pid=ImgRaw&r=0"
-                                                            alt=""
-                                                            className="explain-right-icon"
-                                                        />
-                                                        <span
-                                                            style={{
-                                                                color: '#292929',
-                                                                fontSize: '18px',
-                                                                fontWeight: '600',
-                                                            }}
-                                                        >
-                                                            {correctAnswer}
-                                                        </span>
-                                                    </p>
-                                                </div>
-                                                <hr style={{ margin: '20px 0' }} />
-                                                <h2 className="explain-modal-title">💡 Giải thích</h2>
-                                                <p
-                                                    style={{
-                                                        color: '#292929',
-                                                        fontSize: '18px',
-                                                        fontWeight: '400',
-                                                        marginBottom: '24px',
-                                                    }}
-                                                >
-                                                    <h2 className="explain-text-answer" style={{ color: '#292929' }}>
-                                                        <span
-                                                            className="explain-text"
-                                                            dangerouslySetInnerHTML={{
-                                                                __html: DOMPurify.sanitize(currentQuestion.explain),
-                                                            }}
-                                                        ></span>
-                                                    </h2>
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={handleModalClose}
-                                                className="dol-button special-dol-red understand-button"
-                                            >
-                                                Đã hiểu
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+              <div className="pt-2 flex flex-wrap justify-center md:justify-start gap-2.5">
+                {wrongTotal > 0 && (
+                  <Button variant="primary" size="sm" onClick={handleRetryWrong}>
+                    <RotateCcw className="w-4 h-4" />
+                    Làm lại {wrongTotal} câu sai
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={handleRestartAll}>
+                  <RotateCcw className="w-4 h-4" />
+                  Làm lại toàn bộ
+                </Button>
+                <Button to="/listquiz" variant="ghost" size="sm">
+                  Về kho Quiz
+                </Button>
+                {!auth.currentUser && (
+                  <Button to="/login" variant="secondary" size="sm">
+                    <LogIn className="w-4 h-4" />
+                    Đăng nhập để lưu điểm
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
 
-                                <button onClick={handleShowAnswer} className="dol-button">
-                                    Đáp án
-                                </button>
-                            </>
-                        )}
+          {/* Answer Review List */}
+          <div className="space-y-4">
+            <h2 className="font-serif text-2xl font-bold text-heritage-ink">Xem lại chi tiết từng câu ({total})</h2>
+            {questionPool.map((q, idx) => {
+              const userAns = userAnswers[idx];
+              const right = isAnswerRight(q, userAns);
+              const userDisplay =
+                q.type === 'multipleChoice'
+                  ? userAns !== undefined && userAns !== null
+                    ? `${String.fromCharCode(65 + userAns)}. ${q.options[userAns] || ''}`
+                    : 'Chưa chọn'
+                  : userAns || 'Chưa điền';
+              const rightDisplay =
+                q.type === 'multipleChoice'
+                  ? `${String.fromCharCode(65 + q.correctOptionIndex)}. ${q.options[q.correctOptionIndex] || ''}`
+                  : q.blankAnswer;
 
-                        <div>
-                            <button
-                                style={{ float: 'right' }}
-                                onClick={handleButtonClick}
-                                className={`dol-button special-dol-red ${
-                                    (currentQuestion.type === 'multipleChoice' && selectedOption === null) ||
-                                    (currentQuestion.type === 'fillInTheBlank' && blankAnswer.trim() === '')
-                                        ? 'inactive-button'
-                                        : ''
-                                }`}
-                            >
-                                {showResult
-                                    ? currentQuestionIndex < quiz.questions.length - 1
-                                        ? 'Tiếp theo'
-                                        : 'Hoàn thành'
-                                    : 'Kiểm tra'}
-                            </button>
-                        </div>
+              return (
+                <Card
+                  key={idx}
+                  padding="p-5"
+                  className={`space-y-3 border-l-4 ${right ? 'border-l-heritage-jade' : 'border-l-heritage-vermilion'}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-heritage-muted uppercase">Câu {idx + 1}</span>
+                      <h3 className="font-semibold text-base text-heritage-ink">{q.question}</h3>
                     </div>
-                </div>
-            </footer>
-        </>
+                    {right ? (
+                      <Badge variant="jade" className="shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Chính xác
+                      </Badge>
+                    ) : (
+                      <Badge variant="vermilion" className="shrink-0">
+                        <XCircle className="w-3.5 h-3.5" />
+                        Chưa đúng
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
+                    <div
+                      className={`px-3.5 py-2 rounded-xl border ${
+                        right ? 'bg-teal-50/70 border-teal-200 text-teal-900' : 'bg-red-50/70 border-red-200 text-red-900'
+                      }`}
+                    >
+                      <span className="text-xs font-semibold block opacity-75">Bạn chọn:</span>
+                      <span className="font-semibold">{userDisplay}</span>
+                    </div>
+                    {!right && (
+                      <div className="px-3.5 py-2 rounded-xl border bg-teal-50/70 border-teal-200 text-teal-900">
+                        <span className="text-xs font-semibold block opacity-75">Đáp án đúng:</span>
+                        <span className="font-semibold">{rightDisplay}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {q.explain && (
+                    <div className="rounded-xl bg-heritage-paper px-3.5 py-2.5 text-xs sm:text-sm text-heritage-muted flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-heritage-gold shrink-0 mt-0.5" />
+                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(q.explain) }} />
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </main>
+      </div>
     );
+  }
+
+  // 3. ACTIVE QUESTION SCREEN
+  const progressPercent = ((currentIndex + 1) / questionPool.length) * 100;
+  const canCheck =
+    currentQuestion.type === 'multipleChoice' ? selectedOption !== null : blankAnswer.trim().length > 0;
+
+  return (
+    <div className="min-h-screen bg-heritage-cream flex flex-col">
+      {/* Top Focus Progress Bar */}
+      <header className="sticky top-0 z-30 h-16 px-4 sm:px-6 bg-white/95 backdrop-blur-md border-b border-heritage-border flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => navigate('/listquiz')}
+          aria-label="Thoát bài Quiz"
+          className="p-2 rounded-xl text-heritage-muted hover:text-heritage-ink hover:bg-heritage-paper transition-colors cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex-1 max-w-3xl mx-auto flex items-center gap-3">
+          <div className="flex-1 h-2.5 rounded-full bg-heritage-paper overflow-hidden">
+            <div
+              className="h-full bg-heritage-vermilion rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <span className="text-xs sm:text-sm font-bold text-heritage-ink whitespace-nowrap">
+            Câu {currentIndex + 1} / {questionPool.length}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-label={muted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+          title={muted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+          className="p-2 rounded-xl text-heritage-muted hover:text-heritage-ink hover:bg-heritage-paper transition-colors cursor-pointer"
+        >
+          {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5 text-heritage-jade" />}
+        </button>
+      </header>
+
+      {/* Main Question Body */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-32 space-y-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={meta.badgeVariant}>{meta.shortLabel}</Badge>
+          {isRetryWrongMode && <Badge variant="gold">Ôn lại câu sai</Badge>}
+          <span className="text-xs font-medium text-heritage-muted truncate">{quiz.title}</span>
+        </div>
+
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-heritage-ink leading-snug">
+          {currentQuestion.question}
+        </h1>
+
+        {currentQuestion.type === 'multipleChoice' ? (
+          <div className="space-y-3">
+            {currentQuestion.options.map((option, idx) => {
+              const isSelected = selectedOption === idx;
+              const isRightOpt = checkedCurrent && idx === currentQuestion.correctOptionIndex;
+              const isWrongSelected =
+                checkedCurrent && isSelected && idx !== currentQuestion.correctOptionIndex;
+
+              let styleClass =
+                'bg-white border-heritage-border hover:border-heritage-gold hover:bg-heritage-paper/50';
+              if (isRightOpt) {
+                styleClass = 'bg-teal-50 border-heritage-jade text-teal-950 ring-2 ring-heritage-jade/20';
+              } else if (isWrongSelected) {
+                styleClass = 'bg-red-50 border-red-500 text-red-950 ring-2 ring-red-500/20';
+              } else if (isSelected) {
+                styleClass =
+                  'bg-heritage-vermilion-soft/70 border-heritage-vermilion text-heritage-ink ring-2 ring-heritage-vermilion/20';
+              }
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  disabled={checkedCurrent}
+                  onClick={() => setSelectedOption(idx)}
+                  className={`w-full text-left p-4 sm:p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${
+                    checkedCurrent ? 'cursor-default' : 'cursor-pointer'
+                  } ${styleClass}`}
+                >
+                  <span
+                    className={`w-9 h-9 rounded-xl text-sm font-bold flex items-center justify-center shrink-0 transition-colors ${
+                      isRightOpt
+                        ? 'bg-heritage-jade text-white'
+                        : isWrongSelected
+                        ? 'bg-red-600 text-white'
+                        : isSelected
+                        ? 'bg-heritage-vermilion text-white'
+                        : 'bg-heritage-paper text-heritage-ink'
+                    }`}
+                  >
+                    {String.fromCharCode(65 + idx)}
+                  </span>
+                  <span className="flex-1 text-base font-medium leading-relaxed">{option}</span>
+                  {isRightOpt && <CheckCircle2 className="w-5 h-5 text-heritage-jade shrink-0" />}
+                  {isWrongSelected && <XCircle className="w-5 h-5 text-red-600 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-heritage-muted">
+              Nhập đáp án của bạn vào ô bên dưới:
+            </label>
+            <input
+              type="text"
+              value={blankAnswer}
+              onChange={(e) => setBlankAnswer(e.target.value)}
+              disabled={checkedCurrent}
+              placeholder="Gõ đáp án..."
+              className={`w-full px-5 py-4 rounded-2xl border-2 text-lg font-medium bg-white focus:outline-none ${
+                checkedCurrent
+                  ? isCurrentCorrect
+                    ? 'border-heritage-jade bg-teal-50 text-teal-950'
+                    : 'border-red-500 bg-red-50 text-red-950'
+                  : 'border-heritage-border focus:border-heritage-vermilion'
+              }`}
+            />
+            {checkedCurrent && !isCurrentCorrect && (
+              <p className="text-sm font-semibold text-heritage-jade">
+                Đáp án đúng: {currentQuestion.blankAnswer}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Inline Explanation Card once checked */}
+        {checkedCurrent && (
+          <Card
+            padding="p-5"
+            className={`space-y-2 border-l-4 ${
+              isCurrentCorrect ? 'border-l-heritage-jade bg-teal-50/40' : 'border-l-heritage-vermilion bg-red-50/40'
+            }`}
+          >
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <Lightbulb className="w-4 h-4 text-heritage-gold" />
+              <span className="text-heritage-ink">Giải thích đáp án</span>
+            </div>
+            {currentQuestion.explain ? (
+              <div
+                className="text-sm text-heritage-ink leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(currentQuestion.explain) }}
+              />
+            ) : (
+              <p className="text-sm text-heritage-muted italic">Không có ghi chú giải thích thêm cho câu này.</p>
+            )}
+          </Card>
+        )}
+      </main>
+
+      {/* Bottom Sticky Action Footer */}
+      <footer
+        className={`fixed bottom-0 left-0 right-0 z-30 border-t px-4 sm:px-6 py-4 transition-colors ${
+          checkedCurrent
+            ? isCurrentCorrect
+              ? 'bg-teal-50 border-teal-200'
+              : 'bg-red-50 border-red-200'
+            : 'bg-white border-heritage-border'
+        }`}
+      >
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            {currentIndex > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentIndex((prev) => prev - 1)}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Câu trước</span>
+              </Button>
+            )}
+
+            {checkedCurrent && (
+              <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
+                {isCurrentCorrect ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 text-heritage-jade shrink-0" />
+                    <span className="text-heritage-jade">Chính xác!</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+                    <span className="text-red-700">Chưa chính xác</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Button
+            type="button"
+            variant={checkedCurrent && isCurrentCorrect ? 'secondary' : 'primary'}
+            size="md"
+            disabled={!checkedCurrent && !canCheck}
+            onClick={handleCheckOrNext}
+          >
+            <span>
+              {checkedCurrent
+                ? currentIndex < questionPool.length - 1
+                  ? 'Câu tiếp theo'
+                  : 'Xem kết quả'
+                : 'Kiểm tra'}
+            </span>
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </footer>
+    </div>
+  );
 }
 
 export default ShowQuiz;

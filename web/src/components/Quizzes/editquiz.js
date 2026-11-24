@@ -1,441 +1,239 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase'; // Import Firebase configuration
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { Link } from 'react-router-dom';
+import { Save, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { auth, db } from '../firebase';
+import MainLayout from '../layout/MainLayout';
+import Breadcrumb from '../ui/Breadcrumb';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import AiQuizModal from './aiQuizModal';
+import QuizQuestionBuilder from './QuizQuestionBuilder';
+import { QUIZ_CATEGORIES } from '../../data/quizMeta';
 
+/**
+ * Edit Quiz page sharing QuizQuestionBuilder and AiQuizModal with CreateQuiz.
+ */
 function EditQuiz() {
-    const { id } = useParams(); // Get quiz ID from URL parameters
-    const [user, setUser] = useState(null);
-    const [authorDetails, setAuthorDetails] = useState(null);
-    const [questions, setQuestions] = useState([]);
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [currentQuestion, setCurrentQuestion] = useState({
-        question: '',
-        type: 'multipleChoice', // Default type
-        explain: '',
-        options: ['', '', '', ''],
-        correctOptionIndex: null,
-        blankAnswer: '',
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [authorDetails, setAuthorDetails] = useState(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedType, setSelectedType] = useState('');
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+      try {
+        const [userSnap, quizSnap] = await Promise.all([
+          getDoc(doc(db, 'users', user.uid)),
+          getDoc(doc(db, 'quizzes', id)),
+        ]);
+
+        if (userSnap.exists()) {
+          setAuthorDetails(userSnap.data());
+        } else {
+          setAuthorDetails({
+            firstName: user.displayName || 'Thành viên',
+            photo: user.photoURL || '',
+          });
+        }
+
+        if (quizSnap.exists()) {
+          const data = quizSnap.data();
+          setTitle(data.title || '');
+          setDescription(data.description || '');
+          setSelectedType(data.type || '');
+          setQuestions(Array.isArray(data.questions) ? data.questions : []);
+        } else {
+          toast.error('Không tìm thấy bộ Quiz cần chỉnh sửa.');
+          navigate('/myquiz');
+        }
+      } catch (err) {
+        console.error('Error loading quiz for edit:', err);
+        toast.error('Không thể tải dữ liệu bộ Quiz.');
+      } finally {
+        setLoading(false);
+      }
     });
-    const [selectedValue, setSelectedValue] = useState('');
-    const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchQuizData = async () => {
-            const docRef = doc(db, 'quizzes', id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const quizData = docSnap.data();
-                setTitle(quizData.title);
-                setDescription(quizData.description);
-                setSelectedValue(quizData.type);
-                setQuestions(quizData.questions);
-            } else {
-                console.error('No such quiz document!');
-            }
-        };
+    return () => unsubscribe();
+  }, [id, navigate]);
 
-        const fetchAuthorDetails = async (uid) => {
-            const docRef = doc(db, 'users', uid);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setAuthorDetails(docSnap.data());
-            } else {
-                console.error('No such user document!');
-            }
-        };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title.trim() || !selectedType || questions.length === 0) {
+      toast.warning('Vui lòng nhập đầy đủ tiêu đề, môn học và có ít nhất 1 câu hỏi.');
+      return;
+    }
 
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setUser(user);
-                fetchAuthorDetails(user.uid);
-                fetchQuizData();
-            } else {
-                console.log('User is not logged in');
-                navigate('/login');
-            }
-        });
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
 
-        return () => unsubscribe();
-    }, [id, navigate]);
-
-    const handleTitleChange = (e) => {
-        setTitle(e.target.value);
-    };
-
-    const handleDescriptionChange = (e) => {
-        setDescription(e.target.value);
-    };
-
-    const handleQuestionChange = (e) => {
-        setCurrentQuestion({ ...currentQuestion, question: e.target.value });
-    };
-
-    const handleAnswerChange = (e) => {
-        setCurrentQuestion({ ...currentQuestion, explain: e.target.value });
-    };
-
-    const handleOptionChange = (index, e) => {
-        const newOptions = [...currentQuestion.options];
-        newOptions[index] = e.target.value;
-        setCurrentQuestion({ ...currentQuestion, options: newOptions });
-    };
-
-    const handleCorrectAnswerChange = (index) => {
-        setCurrentQuestion({ ...currentQuestion, correctOptionIndex: index });
-    };
-
-    const handleBlankAnswerChange = (e) => {
-        setCurrentQuestion({ ...currentQuestion, blankAnswer: e.target.value });
-    };
-
-    const addQuestion = () => {
-        if (isFormValid()) {
-            setQuestions([...questions, currentQuestion]);
-            setCurrentQuestion({
-                question: '',
+    setSubmitting(true);
+    try {
+      await updateDoc(doc(db, 'quizzes', id), {
+        title: title.trim(),
+        description: description.trim(),
+        type: selectedType,
+        questions: questions.map((q) =>
+          q.type === 'fillInTheBlank'
+            ? {
+                question: q.question,
+                blankAnswer: q.blankAnswer,
+                explain: q.explain || '',
+                type: 'fillInTheBlank',
+                aiGenerated: Boolean(q.aiGenerated),
+              }
+            : {
+                question: q.question,
+                explain: q.explain || '',
+                options: q.options,
+                correctOptionIndex: q.correctOptionIndex,
                 type: 'multipleChoice',
-                explain: '',
-                options: ['', '', '', ''],
-                correctOptionIndex: null,
-                blankAnswer: '',
-            });
-        }
-    };
+                aiGenerated: Boolean(q.aiGenerated),
+              },
+        ),
+        author: {
+          uid: currentUser.uid,
+          name: authorDetails?.firstName || currentUser.displayName || 'Thành viên',
+          photo: authorDetails?.photo || currentUser.photoURL || '',
+        },
+      });
 
-    const handleSelectChange = (event) => {
-        setSelectedValue(event.target.value);
-    };
+      toast.success('Đã cập nhật bộ Quiz!');
+      navigate('/myquiz');
+    } catch (err) {
+      console.error('Error updating quiz:', err);
+      toast.error('Không thể cập nhật bộ Quiz lúc này.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    const handleQuestionTypeChange = (e) => {
-        setCurrentQuestion({ ...currentQuestion, type: e.target.value });
-    };
+  return (
+    <MainLayout>
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
+        <Breadcrumb
+          items={[
+            { label: 'Trang chủ', to: '/' },
+            { label: 'Quiz của tôi', to: '/myquiz' },
+            { label: 'Chỉnh sửa Quiz' },
+          ]}
+        />
 
-    const deleteQuestion = (index) => {
-        const newQuestions = questions.filter((_, i) => i !== index);
-        setQuestions(newQuestions);
-    };
-
-    const editQuestion = (index) => {
-        setCurrentQuestion(questions[index]);
-        deleteQuestion(index);
-    };
-
-    const isFormValid = () => {
-        const { question, options, correctOptionIndex, type, blankAnswer } = currentQuestion;
-        if (type === 'multipleChoice') {
-            return (
-                selectedValue &&
-                title &&
-                description &&
-                question &&
-                options.every((option) => option) &&
-                correctOptionIndex !== null
-            );
-        } else if (type === 'fillInTheBlank') {
-            return selectedValue && title && description && question && blankAnswer;
-        }
-        return false;
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const currentUser = auth.currentUser;
-
-            if (!currentUser || !authorDetails) {
-                throw new Error('User details are missing');
-            }
-
-            await updateDoc(doc(db, 'quizzes', id), {
-                title: title,
-                description: description,
-                type: selectedValue,
-                questions: questions.map((question) => {
-                    if (question.type === 'multipleChoice') {
-                        return {
-                            question: question.question,
-                            explain: question.explain,
-                            options: question.options,
-                            correctOptionIndex: question.correctOptionIndex,
-                            type: 'multipleChoice',
-                        };
-                    } else if (question.type === 'fillInTheBlank') {
-                        return {
-                            question: question.question,
-                            blankAnswer: question.blankAnswer,
-                            explain: question.explain,
-                            type: 'fillInTheBlank',
-                        };
-                    }
-                    return null;
-                }),
-                author: {
-                    uid: currentUser.uid,
-                    name: authorDetails.firstName,
-                    photo: authorDetails.photo,
-                },
-            });
-
-            navigate('/myquiz');
-        } catch (error) {
-            console.error('Error updating document: ', error);
-        }
-    };
-
-    return (
-        <div className="create-quiz-container">
-            <Link to="#" onClick={() => navigate(-1)} className="go-back">
-                <svg
-                    aria-hidden="true"
-                    focusable="false"
-                    data-prefix="fas"
-                    data-icon="chevron-left"
-                    className="svg-back svg-inline--fa fa-chevron-left "
-                    role="img"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 320 512"
-                >
-                    <path
-                        fill="currentColor"
-                        d="M224 480c-8.188 0-16.38-3.125-22.62-9.375l-192-192c-12.5-12.5-12.5-32.75 0-45.25l192-192c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25L77.25 256l169.4 169.4c12.5 12.5 12.5 32.75 0 45.25C240.4 476.9 232.2 480 224 480z"
-                    ></path>
-                </svg>
-                Quay lại
-            </Link>
-            <h1 className="create-quiz-title">Chỉnh sửa bài tập 📚</h1>
-
-            <div className="input-group" style={{ marginBottom: '0', marginTop: '50px' }}>
-                <input
-                    id="quiz-title"
-                    type="text"
-                    className="blog-title-input"
-                    placeholder="Viết tiêu đề bài tập"
-                    value={title}
-                    onChange={handleTitleChange}
-                />
-            </div>
-
-            <div className="input-group" style={{ marginBottom: '20px' }}>
-                <textarea
-                    id="quiz-description"
-                    type="text"
-                    className="blog-sapo-input"
-                    placeholder="Viết mô tả bài tập"
-                    value={description}
-                    onChange={handleDescriptionChange}
-                    style={{ height: '200px', marginTop: '20px' }}
-                />
-                <hr />
-            </div>
-
-            <div className="input-group" style={{ marginBottom: '100px' }}>
-                <label className="input-label" htmlFor="quiz-type">
-                    Chọn một tùy chọn
-                </label>
-                <select
-                    id="quiz-type"
-                    className="input-field input-effect"
-                    value={selectedValue}
-                    onChange={handleSelectChange}
-                    style={{ cursor: 'pointer' }}
-                >
-                    <option value="">--Chọn môn học--</option>
-                    <option value="ls10">Lịch Sử 10</option>
-                    <option value="ls11">Lịch Sử 11</option>
-                    <option value="ls12">Lịch Sử 12</option>
-                    <option value="dp10">Giáo dục địa phương 10</option>
-                    <option value="dp11">Giáo dục địa phương 11</option>
-                </select>
-            </div>
-
-            <h1 className="blogs-display-title">Phần đặt câu hỏi ✨</h1>
-            <div className="input-group">
-                <label className="input-label" htmlFor="question-type">
-                    Chọn loại câu hỏi
-                </label>
-                <select
-                    id="question-type"
-                    className="input-field input-effect"
-                    value={currentQuestion.type}
-                    onChange={handleQuestionTypeChange}
-                    style={{ cursor: 'pointer' }}
-                >
-                    <option value="multipleChoice">Trắc nghiệm</option>
-                    <option value="fillInTheBlank">Điền vào chỗ trống</option>
-                </select>
-            </div>
-
-            {currentQuestion.type === 'multipleChoice' && (
-                <>
-                    <div className="input-group">
-                        <label className="input-label" htmlFor="question-text">
-                            Câu hỏi
-                        </label>
-                        <input
-                            id="question-text"
-                            type="text"
-                            className="input-field input-effect"
-                            placeholder="Nhập câu hỏi"
-                            value={currentQuestion.question}
-                            onChange={handleQuestionChange}
-                        />
-                    </div>
-
-                    <div className="question-options">
-                        <label className="input-label" htmlFor="question-text">
-                            Các lựa chọn (Chọn câu đúng)
-                        </label>
-
-                        {currentQuestion.options.map((option, index) => (
-                            <div key={index} className="option-group">
-                                <input
-                                    type="text"
-                                    className="input-field input-effect option-input"
-                                    placeholder={`Lựa chọn ${index + 1}`}
-                                    value={option}
-                                    onChange={(e) => handleOptionChange(index, e)}
-                                />
-                                <input
-                                    type="radio"
-                                    className="correct-answer-radio"
-                                    checked={currentQuestion.correctOptionIndex === index}
-                                    onChange={() => handleCorrectAnswerChange(index)}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </>
-            )}
-
-            {currentQuestion.type === 'fillInTheBlank' && (
-                <>
-                    <div className="input-group">
-                        <label className="input-label" htmlFor="question-text">
-                            Câu hỏi (bao gồm khoảng trống)
-                        </label>
-                        <input
-                            id="question-text"
-                            type="text"
-                            className="input-field input-effect"
-                            placeholder="Nhập câu hỏi với khoảng trống"
-                            value={currentQuestion.question}
-                            onChange={handleQuestionChange}
-                        />
-                    </div>
-
-                    <div className="input-group">
-                        <label className="input-label" htmlFor="blank-answer">
-                            Đáp án cho khoảng trống
-                        </label>
-                        <input
-                            id="blank-answer"
-                            type="text"
-                            className="input-field input-effect"
-                            placeholder="Nhập đáp án cho khoảng trống"
-                            value={currentQuestion.blankAnswer}
-                            onChange={handleBlankAnswerChange}
-                        />
-                    </div>
-                </>
-            )}
-
-            <div className="input-group" style={{ marginTop: '30px' }}>
-                <label className="input-label" htmlFor="answer-text">
-                    Giải thích đáp án
-                </label>
-                <textarea
-                    id="answer-text"
-                    type="text"
-                    className="input-field input-effect explain-text-area"
-                    placeholder="Hãy viết giải thích cho đáp án"
-                    value={currentQuestion.explain}
-                    onChange={handleAnswerChange}
-                />
-            </div>
-
-            <button
-                style={{ marginTop: '12px' }}
-                className={`dol-button special-dol-red ${!isFormValid() ? 'inactive-button' : ''}`}
-                onClick={addQuestion}
-            >
-                Thêm câu hỏi
-            </button>
-
-            <div className="question-list">
-                {questions.map((question, index) => (
-                    <div key={index} className="question-item">
-                        <h2>{question.question}</h2>
-                        {question.type === 'multipleChoice' &&
-                            question.options.map((option, i) => (
-                                <div
-                                    key={i}
-                                    className={`option-text ${
-                                        question.correctOptionIndex === i ? 'correct-option' : ''
-                                    }`}
-                                >
-                                    <img
-                                        src="https://gcdnb.pbrd.co/images/AdpFp3XrqIpc.png"
-                                        alt=""
-                                        style={{ display: 'none' }}
-                                        className={`explain-right-icon ${
-                                            question.correctOptionIndex === i ? 'checkIcon' : ''
-                                        }`}
-                                    />
-                                    {option}
-                                </div>
-                            ))}
-                        {question.type === 'fillInTheBlank' && (
-                            <div className="option-text  correct-option">
-                                <img
-                                    src="https://gcdnb.pbrd.co/images/AdpFp3XrqIpc.png"
-                                    alt=""
-                                    style={{ display: 'none' }}
-                                    className={'explain-right-icon checkIcon'}
-                                />
-                                {question.blankAnswer}
-                            </div>
-                        )}
-
-                        <h2 className="explain-text-answer">
-                            Giải thích:
-                            <span
-                                className="explain-text"
-                                dangerouslySetInnerHTML={{ __html: question.explain }}
-                            ></span>
-                        </h2>
-
-                        <button
-                            className="dol-button special-dol-red"
-                            style={{ height: '40px ' }}
-                            onClick={() => editQuestion(index)}
-                        >
-                            Chỉnh sửa
-                        </button>
-                        <button
-                            className="dol-button "
-                            style={{ border: '1px solid #292929', marginLeft: '12px', height: '40px ' }}
-                            onClick={() => deleteQuestion(index)}
-                        >
-                            Xóa câu hỏi
-                        </button>
-                    </div>
-                ))}
-            </div>
-
-            <button
-                style={{ border: '1px solid #292929', marginTop: '25px', width: '100%' }}
-                className={`dol-button ${questions.length === 0 ? 'inactive-button' : ''}`}
-                onClick={handleSubmit}
-                disabled={questions.length === 0}
-            >
-                Cập nhật bài tập
-            </button>
+        <div>
+          <h1 className="font-serif text-3xl font-bold text-heritage-ink">Chỉnh sửa bộ Quiz</h1>
+          <p className="text-sm text-heritage-muted mt-1">Cập nhật câu hỏi, đáp án hoặc bổ sung câu hỏi mới bằng AI.</p>
         </div>
-    );
+
+        {loading ? (
+          <Card className="p-8 text-center text-sm text-heritage-muted">Đang tải bộ Quiz...</Card>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <Card className="space-y-4">
+              <h2 className="font-serif text-xl font-bold text-heritage-ink">Thông tin chung</h2>
+
+              <div>
+                <label className="block text-sm font-semibold text-heritage-ink mb-1.5" htmlFor="edit-quiz-title">
+                  Tiêu đề bộ Quiz *
+                </label>
+                <input
+                  id="edit-quiz-title"
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-heritage-border bg-white text-base font-medium text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-heritage-ink mb-1.5" htmlFor="edit-quiz-type">
+                  Môn học / Khối lớp *
+                </label>
+                <select
+                  id="edit-quiz-type"
+                  required
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-heritage-border bg-white text-sm text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+                >
+                  <option value="">-- Chọn môn học --</option>
+                  {QUIZ_CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
+                    <option key={cat.key} value={cat.key}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-heritage-ink mb-1.5" htmlFor="edit-quiz-desc">
+                  Mô tả ngắn *
+                </label>
+                <textarea
+                  id="edit-quiz-desc"
+                  rows={3}
+                  required
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-heritage-border bg-white text-sm text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+                />
+              </div>
+            </Card>
+
+            <QuizQuestionBuilder
+              questions={questions}
+              setQuestions={setQuestions}
+              onOpenAiModal={() => setModalOpen(true)}
+            />
+
+            <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => navigate('/myquiz')}>
+                Hủy
+              </Button>
+              <Button type="submit" variant="primary" size="lg" disabled={submitting || questions.length === 0}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang cập nhật...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Lưu thay đổi ({questions.length} câu)
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {modalOpen && (
+          <AiQuizModal
+            isOpen={modalOpen}
+            closeModal={() => setModalOpen(false)}
+            onAddQuestions={(items) => setQuestions((prev) => [...prev, ...items])}
+          />
+        )}
+      </section>
+    </MainLayout>
+  );
 }
 
 export default EditQuiz;
