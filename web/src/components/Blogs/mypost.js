@@ -1,119 +1,188 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { db, auth } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { PenSquare, Eye, Pencil, Trash2, FileText } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { db, auth } from '../firebase';
+import MainLayout from '../layout/MainLayout';
+import Breadcrumb from '../ui/Breadcrumb';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import Modal from '../ui/Modal';
+import EmptyState from '../ui/EmptyState';
+import Skeleton from '../ui/Skeleton';
+import {
+  DEFAULT_BLOG_COVER,
+  stripHtml,
+  formatViDate,
+  getBlogDisplayCategory,
+} from '../../utils/blogHelpers';
 
-const MyPosts = () => {
-    const navigate = useNavigate();
-    const [userBlogs, setUserBlogs] = useState([]);
-    const [user, setUser] = useState(null);
+/**
+ * Author Blog Dashboard for viewing, editing, or deleting user-authored articles.
+ */
+function MyPosts() {
+  const navigate = useNavigate();
+  const [userBlogs, setUserBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-    const fetchUserBlogs = async (user) => {
-        try {
-            const blogsQuery = query(collection(db, 'blogs'), where('author.uid', '==', user.uid));
-            const querySnapshot = await getDocs(blogsQuery);
-            const blogsData = querySnapshot.docs.map((doc) => ({
-                ...doc.data(),
-                id: doc.id,
-            }));
-            setUserBlogs(blogsData);
-        } catch (error) {
-            console.error('Error fetching user blogs: ', error);
-        }
-    };
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+      try {
+        const blogsQuery = query(collection(db, 'blogs'), where('author.uid', '==', user.uid));
+        const snapshot = await getDocs(blogsQuery);
+        const list = snapshot.docs.map((docSnap) => ({
+          ...docSnap.data(),
+          id: docSnap.id,
+        }));
+        setUserBlogs(list);
+      } catch (err) {
+        console.error('Error loading user blogs:', err);
+        toast.error('Không thể tải danh sách bài viết của bạn.');
+      } finally {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                setUser(user);
-                fetchUserBlogs(user);
-            } else {
-                console.log('User is not logged in');
-                navigate('/blog');
-            }
-        });
-        return () => unsubscribe();
-    }, []);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'blogs', deleteTarget.id));
+      setUserBlogs((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      toast.success(`Đã xóa bài viết "${deleteTarget.Title}"`);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error('Error deleting blog:', err);
+      toast.error('Không thể xóa bài viết lúc này.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
-    const DeleteBlog = async (id) => {
-        try {
-            await deleteDoc(doc(db, 'blogs', id));
-            setUserBlogs((prevBlogs) => prevBlogs.filter((blog) => blog.id !== id));
-        } catch (error) {
-            console.error('Error removing document: ', error);
-        }
-    };
+  return (
+    <MainLayout>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
+        <Breadcrumb
+          items={[
+            { label: 'Trang chủ', to: '/' },
+            { label: 'Cộng đồng Blog', to: '/blog' },
+            { label: 'Bài viết của tôi' },
+          ]}
+        />
 
-    return (
-        <div className="blogs-container-section">
-            <Link to="/blog" className="go-back">
-                <svg
-                    aria-hidden="true"
-                    focusable="false"
-                    data-prefix="fas"
-                    data-icon="chevron-left"
-                    class="svg-back svg-inline--fa fa-chevron-left "
-                    role="img"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 320 512"
-                >
-                    <path
-                        fill="currentColor"
-                        d="M224 480c-8.188 0-16.38-3.125-22.62-9.375l-192-192c-12.5-12.5-12.5-32.75 0-45.25l192-192c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25L77.25 256l169.4 169.4c12.5 12.5 12.5 32.75 0 45.25C240.4 476.9 232.2 480 224 480z"
-                    ></path>
-                </svg>
-                Quay lại
-            </Link>
-            <h1 className="blogs-display-title">Bài viết của bạn 🦜</h1>
-            <div className="blogs-grid">
-                {userBlogs.map((blog) => (
-                    <Link to={'/blog/' + blog.id} key={blog.id} className="blog-item">
-                        {blog.CoverURL && (
-                            <img
-                                src={
-                                    blog.CoverURL ||
-                                    'https://assets.rebelmouse.io/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbWFnZSI6Imh0dHBzOi8vYXNzZXRzLnJibC5tcy8xMDg5NTI2MC9vcmlnaW4uanBnIiwiZXhwaXJlc19hdCI6MTY0Mzk3NDA2OX0.EKbcCpG-hu1nkgORwEystT7CDJ8itiSwWA7eGKoQReE/img.jpg?width=980'
-                                }
-                                alt=""
-                                className="blog-cover"
-                            />
-                        )}
-                        <p className="blogs-title">{blog.Title}</p>
-                        <div className="blogs-sapo" dangerouslySetInnerHTML={{ __html: blog.Sapo }} />
-
-                        <div className="blog-footer">
-                            <div className="author-info">
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                    }}
-                                >
-                                    <img
-                                        src={blog.author.photo || '/logo192.png'}
-                                        alt="Author"
-                                        className="author-photo"
-                                    />
-                                    <p>{blog.author.name}</p>
-                                </div>
-                                <p>{new Date(blog.published_on.seconds * 1000).toLocaleDateString()}</p>
-                            </div>
-                            <div className="blog-actions">
-                                <Link to={'/blog/edit/' + blog.id} className="edit-link">
-                                    Chỉnh sửa
-                                </Link>
-                                <Link to={'/mypost'} onClick={() => DeleteBlog(blog.id)} className="delete-button">
-                                    Xóa
-                                </Link>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-3xl font-bold text-heritage-ink">Bài viết của tôi</h1>
+            <p className="text-sm text-heritage-muted mt-1">Quản lý và cập nhật các bài chia sẻ bạn đã xuất bản.</p>
+          </div>
+          <Button to="/blogcreate" variant="primary" size="md">
+            <PenSquare className="w-4 h-4" />
+            Viết bài mới
+          </Button>
         </div>
-    );
-};
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <Card key={idx} padding="p-0" className="overflow-hidden">
+                <Skeleton className="h-44 w-full rounded-none" />
+                <div className="p-5 space-y-3">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : userBlogs.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="Bạn chưa đăng bài viết nào"
+            description="Hãy chia sẻ những câu chuyện lịch sử hoặc kinh nghiệm ôn tập của bạn với cộng đồng HTLVN."
+            actionLabel="Viết bài đầu tiên"
+            actionTo="/blogcreate"
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {userBlogs.map((blog) => (
+              <Card key={blog.id} padding="p-0" className="overflow-hidden flex flex-col justify-between">
+                <div>
+                  <div className="relative aspect-[16/10] bg-stone-900 overflow-hidden">
+                    <img
+                      src={blog.CoverURL || DEFAULT_BLOG_COVER}
+                      alt={blog.Title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-3 left-3">
+                      <Badge variant="neutral" className="bg-white/90 backdrop-blur-sm">
+                        {getBlogDisplayCategory(blog)}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="p-5 space-y-2">
+                    <p className="text-xs text-heritage-muted">{formatViDate(blog.published_on)}</p>
+                    <h2 className="font-serif text-lg font-bold text-heritage-ink line-clamp-2">{blog.Title}</h2>
+                    <p className="text-sm text-heritage-muted line-clamp-2">{stripHtml(blog.Sapo)}</p>
+                  </div>
+                </div>
+
+                <div className="px-5 pb-5 pt-2 flex flex-wrap gap-2 border-t border-heritage-border/60">
+                  <Button to={`/blog/${blog.id}`} variant="secondary" size="sm" className="flex-1">
+                    <Eye className="w-3.5 h-3.5" />
+                    Xem bài
+                  </Button>
+                  <Button to={`/blog/edit/${blog.id}`} variant="outline" size="sm">
+                    <Pencil className="w-3.5 h-3.5" />
+                    Sửa
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeleteTarget(blog)}
+                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <Modal
+          isOpen={Boolean(deleteTarget)}
+          onClose={() => !deleting && setDeleteTarget(null)}
+          title="Xác nhận xóa bài viết"
+          maxWidth="max-w-md"
+        >
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-heritage-muted leading-relaxed">
+              Bạn có chắc muốn xóa bài viết <strong className="text-heritage-ink">&ldquo;{deleteTarget?.Title}&rdquo;</strong>?
+              Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="outline" size="sm" disabled={deleting} onClick={() => setDeleteTarget(null)}>
+                Hủy
+              </Button>
+              <Button variant="primary" size="sm" disabled={deleting} onClick={confirmDelete}>
+                {deleting ? 'Đang xóa...' : 'Xác nhận xóa'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </section>
+    </MainLayout>
+  );
+}
 
 export default MyPosts;
