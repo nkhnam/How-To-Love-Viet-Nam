@@ -1,335 +1,463 @@
-import React, { useState, useEffect } from 'react';
-import MarkdownIt from 'markdown-it';
-import DOMPurify from 'dompurify';
+import React, { useState, useMemo } from 'react';
+import { Sparkles, FileText, Image as ImageIcon, BookOpen, Loader2, CheckCircle2, Plus } from 'lucide-react';
+import { toast } from 'react-toastify';
+import Modal from '../ui/Modal';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
 import { API_URL } from '../../config';
+import { COURSES } from '../../data/courses';
 
-const imgHistory10Lesson1 =
-    'Lịch sử là những gì đã diễn ra trong quá khứ, tồn tại một cách khách quan và có thể nhận thức được, gắn liền với con người và xã hội loài người. Nhận thức lịch sử là hiểu biết của con người về hiện thực lịch sử, được phục dựng thông qua tư liệu và phương pháp nghiên cứu phù hợp. Sử học là khoa học nghiên cứu quá trình phát sinh, phát triển của xã hội loài người trong quá khứ, với đối tượng nghiên cứu toàn diện. Sử học có chức năng khoa học (khôi phục, giải thích hiện tượng lịch sử khách quan), xã hội (giúp nhận thức hiện tại, dự đoán tương lai), và giáo dục (truyền đạt bài học lịch sử). Nhiệm vụ của Sử học là rút ra bài học kinh nghiệm, nâng cao nhận thức, giáo dục tư tưởng, và phát triển nhân cách. Sử học tuân theo các nguyên tắc khách quan, trung thực, tiến bộ, toàn diện, và cụ thể. Các nguồn sử liệu, gồm sử liệu trực tiếp (gốc) và gián tiếp (hồi ký, kể chuyện), được phân loại thành sử liệu thành văn, truyền miệng, hiện vật, và đa phương tiện. Sử học sử dụng nhiều phương pháp như phương pháp lịch sử (xem xét sự kiện qua các giai đoạn cụ thể), phương pháp logic (nghiên cứu bản chất và quy luật), cùng các phương pháp khác như lịch đại, đồng đại, điền dã, và phỏng vấn nhân chứng để tái hiện lịch sử một cách chính xác và sinh động.';
-const imgHistory10Lesson2 =
-    'Tri thức lịch sử là những hiểu biết của con người về các lĩnh vực liên quan đến lịch sử, hình thành qua quá trình học tập, khám phá, nghiên cứu và trải nghiệm, có ý nghĩa quan trọng không chỉ với cá nhân mà cả xã hội. Tri thức lịch sử giúp con người nhận thức về cội nguồn, bản sắc của bản thân, gia đình, cộng đồng, dân tộc, là điều kiện cơ bản để giữ gìn và phát triển bản sắc văn hóa trong thời đại toàn cầu hóa. Tri thức lịch sử luôn để lại cho đời sau những bài học kinh nghiệm quý giá, giúp mỗi cá nhân và cộng đồng xã hội tìm hiểu, đúc rút và vận dụng trong quá trình phát triển. Đối với mỗi quốc gia, dân tộc, tri thức lịch sử là nền tảng vững chắc của truyền thống yêu nước, là niềm tự hào và là điểm tựa cho lòng tin vào sức mạnh của dân tộc, đồng thời giúp con người khám phá và tiếp cận với nhiều nền văn hóa, văn minh của nhân loại. Những bài học rút ra từ lịch sử còn giúp mỗi quốc gia, dân tộc tự nhận thức chính mình. Đặc biệt, tri thức lịch sử dân tộc giúp học sinh hiểu rõ quá trình xây dựng và bảo vệ đất nước, hình thành tinh thần yêu nước và niềm tự hào dân tộc, đồng thời có hiểu biết về lịch sử thế giới, văn hóa nhân loại, làm cơ sở để học hỏi, giao lưu và hội nhập quốc tế. Học tập lịch sử giúp con người hiểu rõ quá khứ, là cơ sở để nhận thức hiện tại và dự báo tương lai.';
-const imgHistory10Lesson3 =
-    'Sử học là một môn khoa học liên ngành, có đối tượng nghiên cứu rộng, liên quan đến nhiều lĩnh vực khác nhau nhằm phản ánh toàn diện đời sống con người và xã hội loài người. Sử học sử dụng tri thức từ các ngành khoa học khác để nghiên cứu các vấn đề xã hội, con người một cách hiệu quả, khoa học, và có khả năng liên kết các ngành khoa học xã hội, nhân văn, tự nhiên và công nghệ. Mối liên hệ giữa sử học và các ngành khoa học xã hội và nhân văn khác là rất chặt chẽ, vì tất cả đều lấy xã hội loài người làm đối tượng nghiên cứu. Sử học cung cấp thông tin về bối cảnh hình thành, phát triển và các nhân tố tác động đến quá trình phát triển của xã hội, đồng thời giúp dự báo xu hướng vận động của các ngành khoa học xã hội và nhân văn. Các ngành này cũng hỗ trợ Sử học bằng tri thức, kết quả nghiên cứu và phương pháp giúp khoa học lịch sử đạt kết quả tốt hơn. Sử học và các ngành khoa học tự nhiên, công nghệ cũng có mối quan hệ mật thiết. Sử học cung cấp thông tin về quá khứ và dự báo sự vận động phát triển, phục vụ cho các ngành này trong hoạt động xây dựng và phát triển. Nó giúp xác định không gian và bối cảnh lịch sử, cũng như phục dựng lịch sử phát triển các ngành khoa học tự nhiên và công nghệ, từ đó rút ra bài học và đặc điểm cho sự phát triển tương lai. Ngược lại, các ngành khoa học tự nhiên và công nghệ cung cấp tri thức, kỹ thuật và phương pháp nghiên cứu liên ngành cho Sử học, giúp hiểu rõ sự sáng tạo của con người trong quá trình phát triển xã hội, đồng thời làm sáng tỏ quá trình phát sinh, phát triển của các ngành khoa học và tác động của chúng trong sự tiến bộ của văn minh nhân loại.';
-const imgHistory10Lesson4 =
-    'Sử học nghiên cứu và phục dựng lại bức tranh lịch sử, xác định giá trị lịch sử, văn hóa, khoa học cần được lưu truyền từ thế hệ này sang thế hệ khác, qua đó khẳng định giá trị của các di sản văn hóa và thiên nhiên. Kết quả nghiên cứu của Sử học làm cơ sở để bảo tồn, gìn giữ và phát huy giá trị của các di sản này, như Chùa Cầu ở Hội An. Công tác bảo tồn và phát huy giá trị di sản không chỉ là việc bảo vệ các giá trị của quá khứ mà còn là hoạt động giúp con người nhớ về cội nguồn, hình thành ý thức trách nhiệm với tổ tiên, cộng đồng xã hội và các thế hệ mai sau, đồng thời đảm bảo sự phát triển bền vững cho mỗi quốc gia, dân tộc, và đóng góp cho sự phát triển kinh tế, xã hội. Ví dụ, một góc Thánh địa Mỹ Sơn ở Quảng Nam. Sử học cũng đóng vai trò quan trọng trong sự phát triển công nghiệp văn hóa, cung cấp chất liệu, tri thức, ý tưởng và cảm hứng cho các ngành nghề trong lĩnh vực này, đồng thời thúc đẩy sự sáng tạo của các sản phẩm có giá trị trong công nghiệp văn hóa, như biểu diễn áo dài Việt Nam tại Festival Huế 2018. Các ngành nghề trong công nghiệp văn hóa cũng cung cấp thông tin và tư liệu quý giá, giúp Sử học khôi phục bức tranh lịch sử xã hội đầy đủ, chính xác và sinh động hơn, đồng thời thúc đẩy nghiên cứu các di sản, như trong phim "Mùi cỏ cháy." Sử học cũng đóng vai trò quan trọng trong sự phát triển du lịch, vì di sản văn hóa là sản phẩm của lịch sử, với các di tích lịch sử - văn hóa là tài nguyên du lịch hấp dẫn, thu hút du khách trong và ngoài nước. Phát huy giá trị di sản văn hóa gắn với hoạt động du lịch là một trong những đặc trưng quan trọng của bảo tồn di sản. Du lịch khai thác các di sản này, giúp con người thưởng thức giá trị của di sản thiên nhiên và văn hóa, như Cố đô Huế. Mặt khác, nhu cầu du lịch không chỉ là tham quan mà còn là các hoạt động trải nghiệm để hiểu rõ hơn giá trị của di tích, di sản, và du lịch là động lực thúc đẩy việc bảo tồn và phát huy những giá trị này. Du lịch văn hóa tạo ra việc làm, thu nhập cho người lao động, đồng thời tạo nguồn lực kinh tế để bảo tồn và phát huy giá trị các di sản văn hóa và di tích lịch sử, như Lễ hội chùa Hương ở Hà Nội.';
-
-const preExistingData = {
-    'Lịch Sử 10': {
-        'Bài 1: Hiện thức lịch sử và nhận thức lịch sử': { type: 'image', content: imgHistory10Lesson1 },
-        'Bài 2: Tri thức lịch sử và cuộc sống': { type: 'image', content: imgHistory10Lesson2 },
-        'Bài 3: Sử học với các lĩnh vực khoa học khác': { type: 'image', content: imgHistory10Lesson3 },
-        'Bài 4: Sử học với một số lĩnh vực, ngành nghề hiện đại': { type: 'image', content: imgHistory10Lesson4 },
-    },
-    'Lịch Sử 11': {
-        // 'Bài 1': { type: 'image', content: imgHistory11Lesson1 },
-        // 'Bài 2': { type: 'image', content: imgHistory11Lesson2 },
-    },
+const RICH_PRESET_TEXTS = {
+  'ls10-1':
+    'Lịch sử là những gì đã diễn ra trong quá khứ, tồn tại một cách khách quan và có thể nhận thức được. Nhận thức lịch sử là hiểu biết của con người về hiện thực lịch sử, được phục dựng thông qua tư liệu và phương pháp nghiên cứu phù hợp. Sử học có chức năng khoa học (khôi phục, giải thích hiện tượng lịch sử khách quan), xã hội và giáo dục. Sử học tuân theo các nguyên tắc khách quan, trung thực, tiến bộ, toàn diện và cụ thể. Các nguồn sử liệu gồm sử liệu trực tiếp (gốc) và gián tiếp (hồi ký, kể chuyện), được phân loại thành sử liệu thành văn, truyền miệng, hiện vật và đa phương tiện.',
+  'ls10-2':
+    'Tri thức lịch sử giúp con người nhận thức về cội nguồn, bản sắc của bản thân, gia đình, cộng đồng và dân tộc. Học tập lịch sử là nền tảng của truyền thống yêu nước, niềm tự hào dân tộc, đồng thời giúp khám phá các nền văn hóa nhân loại. Sử học còn cung cấp cơ sở khoa học cho công tác bảo tồn di sản văn hóa, phát triển du lịch bền vững và công nghiệp văn hóa như Chùa Cầu Hội An, Thánh địa Mỹ Sơn, Cố đô Huế.',
 };
 
-function AiQuizModal({ closeModal, setQuestions }) {
-    const [file, setFile] = useState(null);
-    const [numQuestions, setNumQuestions] = useState();
-    const [textContent, setTextContent] = useState('');
-    const [output, setOutput] = useState('(Trình tạo câu hỏi bằng AI - Tối đa 10 câu - Thời gian max 1 phút)');
-    const [selectedSubject, setSelectedSubject] = useState('');
-    const [selectedLesson, setSelectedLesson] = useState('');
-    const [usePreExistingData, setUsePreExistingData] = useState(false);
+function parseQuizText(rawText) {
+  if (!rawText || typeof rawText !== 'string') return [];
 
-    useEffect(() => {
-        if (file || usePreExistingData) {
-            setTextContent('');
-        }
-    }, [file, usePreExistingData]);
+  // Attempt JSON extraction first if the model returns JSON array
+  try {
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question) {
+        return parsed
+          .map((item) => ({
+            question: String(item.question || '').trim(),
+            options: Array.isArray(item.options) ? item.options.slice(0, 4).map((o) => String(o).trim()) : [],
+            correctOptionIndex:
+              typeof item.correctOptionIndex === 'number'
+                ? Math.min(3, Math.max(0, item.correctOptionIndex))
+                : 0,
+            explain: String(item.explain || '').trim(),
+          }))
+          .filter((q) => q.question && q.options.length === 4);
+      }
+    }
+  } catch {
+    // Fallback cleanly to line-based parser
+  }
 
-    useEffect(() => {
-        if (textContent.trim() || usePreExistingData) {
-            setFile(null);
-        }
-    }, [textContent, usePreExistingData]);
+  const blocks = rawText.split(/Câu hỏi:/i).slice(1);
+  return blocks
+    .map((block) => {
+      const lines = block
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
+      const question = (lines[0] || '').replace(/^\*+|\*+$/g, '').trim();
+      const optionLines = lines.filter((l) => /^Lựa chọn\s*\d+\s*:/i.test(l)).slice(0, 4);
+      const options = optionLines.map((l) =>
+        l
+          .replace(/^Lựa chọn\s*\d+\s*:/i, '')
+          .replace(/\*\*/g, '')
+          .trim(),
+      );
+      const correctLine = lines.find((l) => /Lựa chọn đúng:/i.test(l)) || '';
+      const numMatch = correctLine.match(/\d+/);
+      const correctOptionIndex = numMatch ? Math.min(3, Math.max(0, parseInt(numMatch[0], 10) - 1)) : 0;
+      const explainLine = lines.find((l) => /^Giải thích:/i.test(l)) || '';
+      let explain = explainLine.replace(/^Giải thích:/i, '').replace(/^\*+|\*+$/g, '').trim();
+      if (!explain) {
+        const paren = block.match(/\(([^()]{8,})\)/);
+        explain = paren ? paren[1].trim() : '';
+      }
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
+      return {
+        question,
+        options,
+        correctOptionIndex,
+        explain,
+      };
+    })
+    .filter((item) => item.question && item.options.length === 4);
+}
 
-    const handleNumQuestionsChange = (e) => {
-        setNumQuestions(e.target.value);
-    };
+/**
+ * AI Quiz Question Generator Modal:
+ * Keeps modal open during generation, previews questions with selection checkboxes,
+ * and inserts approved items into CreateQuiz or EditQuiz.
+ */
+function AiQuizModal({ isOpen = true, closeModal, onAddQuestions }) {
+  const [sourceMode, setSourceMode] = useState('preset'); // 'preset' | 'text' | 'image'
+  const [selectedCourseId, setSelectedCourseId] = useState('ls10');
+  const [selectedLessonId, setSelectedLessonId] = useState('ls10-1');
+  const [textContent, setTextContent] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [numQuestions, setNumQuestions] = useState(5);
 
-    const handleTextChange = (e) => {
-        setTextContent(e.target.value);
-    };
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [generatedQuestions, setGeneratedQuestions] = useState([]);
+  const [selectedIndices, setSelectedIndices] = useState(new Set());
 
-    const handleSubjectChange = (e) => {
-        setSelectedSubject(e.target.value);
-        setSelectedLesson('');
-    };
+  const coursesWithLessons = useMemo(() => COURSES.filter((c) => c.chapters.length > 0), []);
+  const activeCourse = useMemo(
+    () => coursesWithLessons.find((c) => c.id === selectedCourseId) || coursesWithLessons[0],
+    [coursesWithLessons, selectedCourseId],
+  );
+  const availableLessons = useMemo(
+    () => (activeCourse ? activeCourse.chapters.flatMap((ch) => ch.lessons) : []),
+    [activeCourse],
+  );
+  const activeLesson = useMemo(
+    () => availableLessons.find((l) => l.id === selectedLessonId) || availableLessons[0],
+    [availableLessons, selectedLessonId],
+  );
 
-    const handleLessonChange = (e) => {
-        setSelectedLesson(e.target.value);
-    };
+  const handleCourseChange = (courseId) => {
+    setSelectedCourseId(courseId);
+    const course = coursesWithLessons.find((c) => c.id === courseId);
+    const firstLesson = course?.chapters?.[0]?.lessons?.[0];
+    setSelectedLessonId(firstLesson ? firstLesson.id : '');
+  };
 
-    const handleUsePreExistingDataChange = () => {
-        setUsePreExistingData((prev) => !prev);
-    };
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
+  };
 
-    const handleGenerateQuiz = async () => {
-        if (!file && !textContent.trim() && (!selectedSubject || !selectedLesson)) {
-            alert('Please upload a file, enter text content, or select a subject and lesson');
-            return;
-        }
+  const buildPrompt = (materialText) => {
+    const count = Math.min(10, Math.max(1, Number(numQuestions) || 5));
+    const baseRules = `Tạo ra đúng ${count} câu hỏi trắc nghiệm bằng tiếng Việt theo chương trình GDPT 2018.
+QUAN TRỌNG: KHÔNG dùng cụm từ "tài liệu" hay "theo tài liệu".
+Hãy trình bày mỗi câu theo đúng định dạng sau:
+Câu hỏi: [Nội dung câu hỏi]
+Lựa chọn 1: [Đáp án A]
+Lựa chọn 2: [Đáp án B]
+Lựa chọn 3: [Đáp án C]
+Lựa chọn 4: [Đáp án D]
+Lựa chọn đúng: Lựa chọn [1-4]
+Giải thích: [Giải thích súc tích, chính xác lịch sử]`;
+    return materialText ? `${baseRules}\n\nNội dung nguồn:\n${materialText}` : baseRules;
+  };
 
-        closeModal();
+  const handleGenerate = async () => {
+    setErrorMsg('');
 
-        try {
-            setOutput('Bot đang tạo câu hỏi');
+    let parts = [];
+    if (sourceMode === 'preset') {
+      if (!activeLesson) {
+        setErrorMsg('Vui lòng chọn môn học và bài học.');
+        return;
+      }
+      const presetBody =
+        RICH_PRESET_TEXTS[activeLesson.id] ||
+        `${activeCourse.title} - ${activeLesson.title}\n${activeLesson.keyPoints.join('\n')}`;
+      parts = [{ text: buildPrompt(presetBody) }];
+    } else if (sourceMode === 'text') {
+      if (!textContent.trim()) {
+        setErrorMsg('Vui lòng nhập hoặc dán nội dung bài học.');
+        return;
+      }
+      parts = [{ text: buildPrompt(textContent.trim()) }];
+    } else if (sourceMode === 'image') {
+      if (!imageFile || !imagePreview) {
+        setErrorMsg('Vui lòng chọn một hình ảnh tài liệu hoặc đề bài.');
+        return;
+      }
+      const base64 = imagePreview.split(',')[1];
+      parts = [
+        { inline_data: { mime_type: imageFile.type || 'image/jpeg', data: base64 } },
+        { text: buildPrompt('') },
+      ];
+    }
 
-            if (usePreExistingData && selectedSubject && selectedLesson) {
-                const lessonData = preExistingData[selectedSubject][selectedLesson];
-                let contents;
+    setIsLoading(true);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (process.env.REACT_APP_API_TOKEN) {
+        headers['X-Api-Token'] = process.env.REACT_APP_API_TOKEN;
+      }
+      const response = await fetch(`${API_URL}/generate`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ contents: [{ role: 'user', parts }] }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Dịch vụ AI hiện không phản hồi.');
+      }
 
-                if (lessonData.type === 'image') {
-                    contents = [
-                        {
-                            role: 'user',
-                            parts: [
-                                {
-                                    text: `
-                                            Tạo ra ${numQuestions} câu hỏi trắc nghiệm từ tài liệu này:
-                                            1. QUAN TRỌNG KHÔNG dùng cụm từ "tài liệu" và "theo tài liệu"
-                                            Tôi muốn bạn tạo câu hỏi theo cấu trúc sau đây:
-                                            Câu hỏi: Phần câu hỏi bạn tạo
-                                            Lựa chọn 1: Phần lựa chọn bạn tạo
-                                            Lựa chọn 2: Phần lựa chọn bạn tạo
-                                            Lựa chọn 3: Phần lựa chọn bạn tạo
-                                            Lựa chọn 4: Phần lựa chọn bạn tạo
-                                            Lựa chọn đúng: Lựa chọn n
-                                            Giải thích: súc tích và cô động nhất có thể (lấy dẫn chứng trong tài liệu, kết thúc và bắt đầu bằng dấu ngoặc đơn)
-                                            \n\n${lessonData.content}
-                                        `,
-                                },
-                            ],
-                        },
-                    ];
-                    await generateQuiz(contents);
-                } else {
-                    contents = [
-                        {
-                            role: 'user',
-                            parts: [
-                                {
-                                    text: `
-                                            Tạo ra ${numQuestions} câu hỏi trắc nghiệm từ tài liệu này:
-                                            1. QUAN TRỌNG KHÔNG dùng cụm từ "tài liệu" và "theo tài liệu"
-                                            Tôi muốn bạn tạo câu hỏi theo cấu trúc sau đây:
-                                            Câu hỏi: Phần câu hỏi bạn tạo
-                                            Lựa chọn 1: Phần lựa chọn bạn tạo
-                                            Lựa chọn 2: Phần lựa chọn bạn tạo
-                                            Lựa chọn 3: Phần lựa chọn bạn tạo
-                                            Lựa chọn 4: Phần lựa chọn bạn tạo
-                                            Lựa chọn đúng: Lựa chọn n
-                                            Giải thích: súc tích và cô động nhất có thể (lấy dẫn chứng trong tài liệu, kết thúc và bắt đầu bằng dấu ngoặc đơn)
-                                            \n\n${lessonData.content}
-                                   `,
-                                },
-                            ],
-                        },
-                    ];
-                    await generateQuiz(contents);
-                }
-            } else if (file) {
-                const reader = new FileReader();
-                reader.onload = async () => {
-                    const base64 = reader.result.split(',')[1];
-                    const contents = [
-                        {
-                            role: 'user',
-                            parts: [
-                                {
-                                    inline_data: { mime_type: file.type, data: base64 },
-                                },
-                                {
-                                    text: `
-                                            Tạo ra ${numQuestions} câu hỏi trắc nghiệm từ tài liệu này:
-                                            1. QUAN TRỌNG KHÔNG dùng cụm từ "tài liệu" và "theo tài liệu"
-                                            Tôi muốn bạn tạo câu hỏi theo cấu trúc sau đây:
-                                            Câu hỏi: Phần câu hỏi bạn tạo
-                                            Lựa chọn 1: Phần lựa chọn bạn tạo
-                                            Lựa chọn 2: Phần lựa chọn bạn tạo
-                                            Lựa chọn 3: Phần lựa chọn bạn tạo
-                                            Lựa chọn 4: Phần lựa chọn bạn tạo
-                                            Lựa chọn đúng: Lựa chọn n
-                                            Giải thích: súc tích và cô động nhất có thể (lấy dẫn chứng trong tài liệu, kết thúc và bắt đầu bằng dấu ngoặc đơn)
-                                    `,
-                                },
-                            ],
-                        },
-                    ];
+      const parsed = parseQuizText(data.text);
+      if (parsed.length === 0) {
+        throw new Error('AI trả về định dạng chưa hợp lệ. Vui lòng thử tạo lại.');
+      }
 
-                    await generateQuiz(contents);
-                };
-                reader.readAsDataURL(file);
-            } else if (textContent.trim()) {
-                const contents = [
-                    {
-                        role: 'user',
-                        parts: [
-                            {
-                                text: `
-                                        Tạo ra ${numQuestions} câu hỏi trắc nghiệm từ tài liệu này:
-                                        1. QUAN TRỌNG KHÔNG dùng cụm từ "tài liệu" và "theo tài liệu"
-                                        Tôi muốn bạn tạo câu hỏi theo cấu trúc sau đây:
-                                        Câu hỏi: Phần câu hỏi bạn tạo
-                                        Lựa chọn 1: Phần lựa chọn bạn tạo
-                                        Lựa chọn 2: Phần lựa chọn bạn tạo
-                                        Lựa chọn 3: Phần lựa chọn bạn tạo
-                                        Lựa chọn 4: Phần lựa chọn bạn tạo
-                                        Lựa chọn đúng: Lựa chọn n
-                                        Giải thích: súc tích và cô động nhất có thể (lấy dẫn chứng trong tài liệu, kết thúc và bắt đầu bằng dấu ngoặc đơn)
-                                        \n\n${textContent.trim()}
-                                `,
-                            },
-                        ],
-                    },
-                ];
+      setGeneratedQuestions(parsed);
+      setSelectedIndices(new Set(parsed.map((_, i) => i)));
+      toast.success(`AI đã tạo xong ${parsed.length} câu hỏi!`);
+    } catch (err) {
+      setErrorMsg(
+        err.message || 'Không thể kết nối máy chủ AI. Hãy đảm bảo Flask AI API đang chạy.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-                await generateQuiz(contents);
-            }
-        } catch (error) {
-            console.error('Error generating quiz: ', error);
-            alert('Error generating quiz');
-        }
-    };
+  const toggleIndex = (idx) => {
+    setSelectedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
 
-    const generateQuiz = async (contents) => {
-        let buffer = [];
-        let md = new MarkdownIt();
-        try {
-            const response = await fetch(`${API_URL}/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents }),
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || 'AI service error');
-            }
-            buffer.push(data.text);
-        } catch (error) {
-            alert(`Error generating quiz: ${error.message}`);
-            return;
-        }
+  const handleInsertSelected = () => {
+    const picked = generatedQuestions
+      .filter((_, idx) => selectedIndices.has(idx))
+      .map((item) => ({
+        question: item.question,
+        explain: item.explain,
+        type: 'multipleChoice',
+        options: item.options,
+        correctOptionIndex: item.correctOptionIndex,
+        aiGenerated: true,
+      }));
+    if (picked.length === 0) {
+      toast.warning('Vui lòng chọn ít nhất 1 câu hỏi để thêm.');
+      return;
+    }
+    onAddQuestions(picked);
+    toast.success(`Đã thêm ${picked.length} câu hỏi AI vào bộ Quiz!`);
+    closeModal();
+  };
 
-        const parsedQuestions = parseQuizText(buffer.join(''));
-
-        const aiQuestions = parsedQuestions.map((parsedQuestion) => ({
-            questionText: parsedQuestion.question,
-            type: 'multipleChoice',
-            answerText: parsedQuestion.explanation,
-            options: parsedQuestion.options,
-            correctAnswerIndex: parsedQuestion.correctAnswerIndex,
-            aiGenerated: true,
-        }));
-
-        setQuestions((prevQuestions) => [...prevQuestions, ...aiQuestions]);
-        setOutput(md.render(buffer.join('')));
-        closeModal();
-    };
-
-    const parseQuizText = (text) => {
-        const questions = text.split('Câu hỏi:').slice(1);
-        return questions.map((questionText) => {
-            const parts = questionText.split('\n').filter(Boolean);
-            const question = parts[0]?.replace(/\*/g, '').trim() || '';
-            const options = parts.slice(1, 5).map((option) => option.split(':')[1]?.replace(/\*/g, '').trim() || '');
-            const correctAnswerText = parts.find((part) => part.includes('Lựa chọn đúng:')) || '';
-            const correctAnswerIndex = parseInt(correctAnswerText.match(/\d+/)) - 1;
-            const explanationMatch = questionText.match(/\(.*?\)/);
-            const explanation = explanationMatch ? explanationMatch[0].replace(/[\(\)]/g, '').trim() : '';
-
-            return {
-                question,
-                options: options.map((option) => option.replace(/(Lựa chọn \d+:)/, '').trim()),
-                correctAnswerIndex,
-                explanation,
-            };
-        });
-    };
-
-    return (
-        <div className="ai-quiz-modal">
-            <div className="ai-quiz-modal-content">
-                <h2>Tạo Quiz từ tài liệu</h2>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
-                    <div>
-                        <input
-                            type="radio"
-                            id="user-data"
-                            name="data-source"
-                            checked={!usePreExistingData}
-                            onChange={handleUsePreExistingDataChange}
-                        />
-                        <label htmlFor="user-data">Dữ liệu người dùng</label>
-                    </div>
-                    <div>
-                        <input
-                            type="radio"
-                            id="pre-existing-data"
-                            name="data-source"
-                            checked={usePreExistingData}
-                            onChange={handleUsePreExistingDataChange}
-                        />
-                        <label htmlFor="pre-existing-data">Dữ liệu có sẵn</label>
-                    </div>
-                </div>
-                {!usePreExistingData && (
-                    <>
-                        <textarea
-                            placeholder="Nhập nội dung..."
-                            value={textContent}
-                            onChange={handleTextChange}
-                            rows="4"
-                        />
-                        <input type="file" accept="image/*" onChange={handleFileChange} />
-                    </>
-                )}
-                {usePreExistingData && (
-                    <>
-                        <select value={selectedSubject} onChange={handleSubjectChange}>
-                            <option value="">Chọn môn học</option>
-                            {Object.keys(preExistingData).map((subject) => (
-                                <option key={subject} value={subject}>
-                                    {subject}
-                                </option>
-                            ))}
-                        </select>
-                        <select value={selectedLesson} onChange={handleLessonChange} disabled={!selectedSubject}>
-                            <option value="">Chọn bài học</option>
-                            {selectedSubject &&
-                                Object.keys(preExistingData[selectedSubject]).map((lesson) => (
-                                    <option key={lesson} value={lesson}>
-                                        {lesson}
-                                    </option>
-                                ))}
-                        </select>
-                    </>
-                )}
-                <input
-                    type="number"
-                    value={numQuestions}
-                    onChange={handleNumQuestionsChange}
-                    placeholder="Số lượng câu hỏi"
-                />
-                <div style={{ margin: '20px 0', display: 'flex' }}>
-                    <button className="dol-button generate-btn" onClick={handleGenerateQuiz}>
-                        Tạo Quiz
-                    </button>
-                    <button className="dol-button special-dol-red" onClick={closeModal}>
-                        Đóng
-                    </button>
-                </div>
-                <div className="output" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(output) }} />
-            </div>
+  return (
+    <Modal isOpen={isOpen} onClose={closeModal} title="Trình tạo câu hỏi Quiz bằng AI" maxWidth="max-w-3xl">
+      <div className="p-5 sm:p-6 space-y-5">
+        {/* Source mode selector */}
+        <div className="grid grid-cols-3 gap-2 bg-heritage-paper p-1.5 rounded-xl border border-heritage-border">
+          {[
+            { key: 'preset', label: 'Bài học SGK', icon: BookOpen },
+            { key: 'text', label: 'Dán văn bản', icon: FileText },
+            { key: 'image', label: 'Từ hình ảnh', icon: ImageIcon },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = sourceMode === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  setSourceMode(tab.key);
+                  setErrorMsg('');
+                }}
+                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                  active ? 'bg-white text-heritage-vermilion shadow-sm' : 'text-heritage-muted hover:text-heritage-ink'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
-    );
+
+        {/* Inputs by source mode */}
+        {sourceMode === 'preset' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-heritage-muted mb-1.5">
+                Môn học
+              </label>
+              <select
+                value={selectedCourseId}
+                onChange={(e) => handleCourseChange(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-heritage-border bg-white text-sm text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+              >
+                {coursesWithLessons.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.shortTitle}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-heritage-muted mb-1.5">
+                Bài học trọng tâm
+              </label>
+              <select
+                value={selectedLessonId}
+                onChange={(e) => setSelectedLessonId(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-heritage-border bg-white text-sm text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+              >
+                {availableLessons.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {sourceMode === 'text' && (
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-heritage-muted mb-1.5">
+              Dán đoạn văn bản / ghi chú ôn tập
+            </label>
+            <textarea
+              rows={5}
+              value={textContent}
+              onChange={(e) => setTextContent(e.target.value)}
+              placeholder="Dán nội dung bài học Lịch Sử hoặc Giáo dục địa phương tại đây..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-heritage-border bg-heritage-cream/40 text-sm text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+            />
+          </div>
+        )}
+
+        {sourceMode === 'image' && (
+          <div className="space-y-3">
+            <label className="flex flex-col items-center justify-center p-5 rounded-xl border-2 border-dashed border-heritage-border bg-heritage-cream/40 hover:border-heritage-jade transition-colors cursor-pointer text-center">
+              <ImageIcon className="w-7 h-7 text-heritage-jade mb-2" />
+              <span className="text-sm font-semibold text-heritage-ink">
+                {imageFile ? imageFile.name : 'Chọn ảnh trang sách hoặc tài liệu'}
+              </span>
+              <span className="text-xs text-heritage-muted mt-0.5">Hỗ trợ PNG, JPG, WEBP</span>
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+            </label>
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Xem trước"
+                className="max-h-48 mx-auto rounded-xl border border-heritage-border object-contain"
+              />
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-1">
+          <div className="w-full sm:w-44">
+            <label className="block text-xs font-bold uppercase tracking-wider text-heritage-muted mb-1.5">
+              Số câu hỏi (1 – 10)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={numQuestions}
+              onChange={(e) => setNumQuestions(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-xl border border-heritage-border bg-white text-sm text-heritage-ink"
+            />
+          </div>
+
+          <Button type="button" variant="secondary" disabled={isLoading} onClick={handleGenerate}>
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                AI đang biên soạn...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                {generatedQuestions.length > 0 ? 'Tạo lại bộ câu hỏi' : 'Bắt đầu tạo câu hỏi'}
+              </>
+            )}
+          </Button>
+        </div>
+
+        {errorMsg && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-medium">
+            {errorMsg}
+          </div>
+        )}
+
+        {/* PREVIEW & PICK STEP */}
+        {generatedQuestions.length > 0 && (
+          <div className="space-y-3 pt-3 border-t border-heritage-border">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-heritage-ink">
+                Xem trước câu hỏi ({selectedIndices.size}/{generatedQuestions.length} được chọn)
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedIndices(
+                    selectedIndices.size === generatedQuestions.length
+                      ? new Set()
+                      : new Set(generatedQuestions.map((_, i) => i)),
+                  )
+                }
+                className="text-xs font-semibold text-heritage-vermilion hover:underline cursor-pointer"
+              >
+                {selectedIndices.size === generatedQuestions.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+              {generatedQuestions.map((q, idx) => {
+                const checked = selectedIndices.has(idx);
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => toggleIndex(idx)}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition-colors ${
+                      checked
+                        ? 'border-heritage-jade bg-heritage-jade-soft/25'
+                        : 'border-heritage-border bg-white opacity-70'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {}}
+                        className="mt-1 h-4 w-4 accent-heritage-jade cursor-pointer"
+                      />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="neutral">Câu {idx + 1}</Badge>
+                          <p className="text-sm font-semibold text-heritage-ink">{q.question}</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                          {q.options.map((opt, optIdx) => (
+                            <span
+                              key={optIdx}
+                              className={`flex items-center gap-1 ${
+                                optIdx === q.correctOptionIndex
+                                  ? 'text-heritage-jade font-bold'
+                                  : 'text-heritage-muted'
+                              }`}
+                            >
+                              {optIdx === q.correctOptionIndex && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
+                              <span>
+                                {String.fromCharCode(65 + optIdx)}. {opt}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                        {q.explain && <p className="text-xs text-heritage-muted italic">Giải thích: {q.explain}</p>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={closeModal}>
+                Đóng
+              </Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleInsertSelected}>
+                <Plus className="w-4 h-4" />
+                Thêm {selectedIndices.size} câu hỏi vào Quiz
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
 }
 
 export default AiQuizModal;

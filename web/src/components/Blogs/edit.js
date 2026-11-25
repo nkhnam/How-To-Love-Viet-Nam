@@ -1,183 +1,245 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Timestamp, updateDoc, doc, getDoc } from 'firebase/firestore';
-import { db, storage } from '../firebase';
-import { collection } from 'firebase/firestore';
 import { Editor } from '@tinymce/tinymce-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Link } from 'react-router-dom';
+import { Upload, Save, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { auth, db } from '../firebase';
+import MainLayout from '../layout/MainLayout';
+import Breadcrumb from '../ui/Breadcrumb';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import SmartImage from '../ui/SmartImage';
+import { BLOG_WRITABLE_CATEGORIES, DEFAULT_BLOG_COVER } from '../../utils/blogHelpers';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 
-const BlogsCollection = collection(db, 'blogs');
+/**
+ * Edit Blog page preserving existing Firestore & TinyMCE contracts.
+ */
+function BlogEdit() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('Lịch Sử');
+  const [sapo, setSapo] = useState('');
+  const [body, setBody] = useState('');
+  const [cover, setCover] = useState(null);
+  const [coverUrl, setCoverUrl] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-const BlogEdit = () => {
-    const navigate = useNavigate();
-    const { id } = useParams();
-    const [title, setTitle] = useState('');
-    const [sapo, setSapo] = useState('');
-    const [body, setBody] = useState('');
-    const [cover, setCover] = useState(null);
-    const [coverUrl, setCoverUrl] = useState('');
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+      try {
+        const docSnap = await getDoc(doc(db, 'blogs', id));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setTitle(data.Title || '');
+          setSapo(data.Sapo || '');
+          setBody(data.Body || '');
+          setCoverUrl(data.CoverURL || '');
+          if (data.category) setCategory(data.category);
+        } else {
+          toast.error('Không tìm thấy bài viết cần sửa.');
+          navigate('/mypost');
+        }
+      } catch (err) {
+        console.error('Error loading blog for edit:', err);
+        toast.error('Không thể tải dữ liệu bài viết.');
+      } finally {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [id, navigate]);
 
-    const handleEditorImageUpload = async (blobInfo, progress) => {
-        return new Promise((resolve, reject) => {
-            const file = blobInfo.blob();
-            const storageRef = ref(storage, `editorImages/${file.name}`);
-            uploadBytes(storageRef, file)
-                .then(async (snapshot) => {
-                    const downloadURL = await getDownloadURL(storageRef);
-                    resolve(downloadURL);
-                })
-                .catch((error) => {
-                    console.error('Error uploading image: ', error);
-                    reject('Image upload failed');
-                });
+  const handleCoverChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCover(file);
+    setCoverUrl(URL.createObjectURL(file));
+  };
+
+  const handleEditorImageUpload = (blobInfo) =>
+    uploadImageWithFallback(blobInfo.blob(), `editorImages/${Date.now()}_${blobInfo.filename()}`, {
+      maxWidth: 1000,
+      quality: 0.78,
+    });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title.trim() || !sapo.trim() || !body.trim()) {
+      toast.warning('Vui lòng nhập đầy đủ tiêu đề, đoạn giới thiệu và nội dung.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      let updatedCoverUrl = coverUrl;
+      if (cover) {
+        updatedCoverUrl = await uploadImageWithFallback(cover, `covers/${Date.now()}_${cover.name}`, {
+          maxWidth: 1200,
+          quality: 0.78,
         });
-    };
+      }
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const docRef = doc(BlogsCollection, id);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setTitle(data.Title);
-                    setSapo(data.Sapo);
-                    setBody(data.Body);
-                    setCoverUrl(data.CoverURL);
-                } else {
-                    console.error('No such document!');
-                }
-            } catch (error) {
-                console.error('Error fetching document:', error);
-            }
-        };
+      await updateDoc(doc(db, 'blogs', id), {
+        Title: title.trim(),
+        CoverURL: updatedCoverUrl || DEFAULT_BLOG_COVER,
+        Sapo: sapo.trim(),
+        Body: body,
+        category,
+        last_Updated: Timestamp.fromDate(new Date()),
+      });
 
-        fetchData();
-    }, [id]);
+      toast.success('Đã lưu thay đổi bài viết!');
+      navigate('/mypost');
+    } catch (error) {
+      console.error('Error updating blog:', error);
+      toast.error('Không thể cập nhật bài viết lúc này.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    const handleCoverChange = (e) => {
-        if (e.target.files[0]) {
-            const file = e.target.files[0];
-            setCover(file);
-            const imageUrl = URL.createObjectURL(file);
-            setCoverUrl(imageUrl);
-        }
-    };
+  return (
+    <MainLayout>
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
+        <Breadcrumb
+          items={[
+            { label: 'Trang chủ', to: '/' },
+            { label: 'Bài viết của tôi', to: '/mypost' },
+            { label: 'Chỉnh sửa' },
+          ]}
+        />
 
-    const uploadImage = async (image) => {
-        if (!image) return null;
-        const storageRef = ref(storage, `covers/${image.name}`);
-        await uploadBytes(storageRef, image);
-        const downloadURL = await getDownloadURL(storageRef);
-        return downloadURL;
-    };
+        <div>
+          <h1 className="font-serif text-3xl font-bold text-heritage-ink">Chỉnh sửa bài viết</h1>
+        </div>
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const docRef = doc(BlogsCollection, id);
-
-        try {
-            let updatedCoverUrl = coverUrl;
-
-            if (cover) {
-                updatedCoverUrl = await uploadImage(cover);
-            }
-
-            await updateDoc(docRef, {
-                Title: title,
-                CoverURL: updatedCoverUrl,
-                Sapo: sapo,
-                Body: body,
-                last_Updated: Timestamp.fromDate(new Date()),
-            });
-            navigate('/mypost');
-        } catch (error) {
-            console.error('Error updating document:', error);
-        }
-    };
-
-    return (
-        <div className="create-blog-container">
-            <Link to="#" onClick={() => navigate(-1)} className="go-back">
-                <svg
-                    aria-hidden="true"
-                    focusable="false"
-                    data-prefix="fas"
-                    data-icon="chevron-left"
-                    class="svg-back svg-inline--fa fa-chevron-left "
-                    role="img"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 320 512"
-                >
-                    <path
-                        fill="currentColor"
-                        d="M224 480c-8.188 0-16.38-3.125-22.62-9.375l-192-192c-12.5-12.5-12.5-32.75 0-45.25l192-192c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25L77.25 256l169.4 169.4c12.5 12.5 12.5 32.75 0 45.25C240.4 476.9 232.2 480 224 480z"
-                    ></path>
-                </svg>
-                Quay lại
-            </Link>
-            <form onSubmit={handleSubmit} className="create-blog-form">
-                <input
-                    className="blog-title-input"
+        {loading ? (
+          <Card className="p-8 text-center text-sm text-heritage-muted">Đang tải nội dung...</Card>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Card className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-heritage-ink mb-1.5" htmlFor="edit-blog-title">
+                    Tiêu đề bài viết *
+                  </label>
+                  <input
+                    id="edit-blog-title"
                     type="text"
-                    placeholder="Tiêu đề bài viết"
+                    required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    required
-                />
-
-                <input
-                    className="blog-sapo-input"
-                    type="text"
-                    placeholder="Giới thiệu bài viết"
-                    value={sapo}
-                    onChange={(e) => setSapo(e.target.value)}
-                    required
-                />
-
-                <Editor
-                    value={body}
-                    apiKey="oeo0mvjhplm4h0ytixxwjwa33b2k5t3gfg2wcp3mdely60en"
-                    textareaName="Body"
-                    init={{
-                        height: 600,
-                        menubar: false,
-                        plugins:
-                            'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen powerpaste advtable advcode editimage advtemplate mentions tableofcontents footnotes mergetags autocorrect typography inlinecss markdown',
-                        toolbar:
-                            'undo redo | formatselect | blocks fontsize | ' +
-                            'bold italic backcolor | bullist numlist | ' +
-                            'removeformat | image ',
-                        content_style:
-                            'body { font-family:system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" } p, li { font-size:18px !important }  img{ max-width: 100% !important; height: auto !important; object-fit: contain}',
-                        images_upload_handler: handleEditorImageUpload,
-                    }}
-                    onEditorChange={(content) => setBody(content)}
-                />
-
-                <div className="preview-blogImg-container">
-                    <label htmlFor="images" className="drop-container" id="dropcontainer">
-                        <span className="drop-title">Drop files here</span>
-                        <input type="file" name="coverImg" accept="image/*" onChange={handleCoverChange} />
-                    </label>
-
-                    <img
-                        src={
-                            coverUrl ||
-                            'https://assets.rebelmouse.io/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbWFnZSI6Imh0dHBzOi8vYXNzZXRzLnJibC5tcy8xMDg5NTI2MC9vcmlnaW4uanBnIiwiZXhwaXJlc19hdCI6MTY0Mzk3NDA2OX0.EKbcCpG-hu1nkgORwEystT7CDJ8itiSwWA7eGKoQReE/img.jpg?width=980'
-                        }
-                        alt="Preview"
-                    />
-
-                    <button type="submit" style={{ display: 'block' }} className="sign-button create-blog-button">
-                        Chỉnh sửa bài viết
-                    </button>
+                    className="w-full px-4 py-2.5 rounded-xl border border-heritage-border bg-white text-base font-medium text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+                  />
                 </div>
-            </form>
-        </div>
-    );
-};
+
+                <div>
+                  <label className="block text-sm font-semibold text-heritage-ink mb-1.5" htmlFor="edit-blog-cat">
+                    Chủ đề
+                  </label>
+                  <select
+                    id="edit-blog-cat"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-heritage-border bg-white text-sm text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+                  >
+                    {BLOG_WRITABLE_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-heritage-ink mb-1.5" htmlFor="edit-blog-sapo">
+                  Đoạn giới thiệu ngắn *
+                </label>
+                <textarea
+                  id="edit-blog-sapo"
+                  rows={2}
+                  required
+                  value={sapo}
+                  onChange={(e) => setSapo(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-heritage-border bg-white text-sm text-heritage-ink focus:outline-none focus:ring-2 focus:ring-heritage-vermilion/25"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-heritage-ink mb-2">Ảnh bìa</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                  <label className="flex flex-col items-center justify-center p-5 rounded-xl border-2 border-dashed border-heritage-border bg-heritage-cream/50 hover:border-heritage-vermilion transition-colors cursor-pointer text-center min-h-[140px]">
+                    <Upload className="w-6 h-6 text-heritage-vermilion mb-2" />
+                    <span className="text-sm font-semibold text-heritage-ink">
+                      {cover ? cover.name : 'Đổi ảnh bìa khác'}
+                    </span>
+                    <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
+                  </label>
+
+                  <div className="rounded-xl overflow-hidden border border-heritage-border h-[140px] bg-stone-100">
+                    <SmartImage
+                      src={coverUrl}
+                      fallbackSrc={DEFAULT_BLOG_COVER}
+                      alt="Xem trước ảnh bìa"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="space-y-3">
+              <label className="block text-sm font-semibold text-heritage-ink">Nội dung bài viết *</label>
+              <Editor
+                value={body}
+                apiKey={process.env.REACT_APP_TINYMCE_API_KEY}
+                onEditorChange={(content) => setBody(content)}
+                init={{
+                  height: 480,
+                  menubar: false,
+                  plugins:
+                    'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                  toolbar:
+                    'undo redo | blocks fontsize | bold italic backcolor | bullist numlist | link image | removeformat',
+                  content_style:
+                    'body { font-family: "Be Vietnam Pro", system-ui, sans-serif; color: #1C1917; } p, li { font-size: 16px; line-height: 1.7; } img { max-width: 100%; height: auto; border-radius: 10px; }',
+                  images_upload_handler: handleEditorImageUpload,
+                }}
+              />
+            </Card>
+
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <Button type="button" variant="outline" onClick={() => navigate('/mypost')}>
+                Hủy
+              </Button>
+              <Button type="submit" variant="primary" size="lg" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Lưu thay đổi
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+      </section>
+    </MainLayout>
+  );
+}
 
 export default BlogEdit;
