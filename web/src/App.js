@@ -26,9 +26,6 @@ import EditQuiz from './components/Quizzes/editquiz.js';
 
 import UserProfile from './components/Signpage/userProfile.js';
 import Messages from './components/Signpage/messages.js';
-import Inbox from './components/Signpage/inbox.js';
-
-import StudyBot from './components/StudyBot.js';
 
 const ProvincesAtlasPage = lazy(() => import('./pages/ProvincesAtlasPage.js'));
 const ProvinceDetailPage = lazy(() => import('./pages/ProvinceDetailPage.js'));
@@ -104,7 +101,7 @@ function App() {
           <Route path="/profile/:userId" element={<UserProfile />} />
           <Route path="/messages/:userId" element={<Messages />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/inbox" element={<Inbox />} />
+          <Route path="/inbox" element={<Navigate to="/messages" replace />} />
           <Route path="/forgotpass" element={<ForgotPasswordModal />} />
 
           {/* Blog */}
@@ -127,7 +124,7 @@ function App() {
           <Route path="/bot" element={<Navigate to="/ai?tab=solver" replace />} />
           <Route path="/chatbot" element={<Navigate to="/ai?tab=chat" replace />} />
           <Route path="/mindmap" element={<Navigate to="/ai?tab=mindmap" replace />} />
-          <Route path="/studybot" element={<StudyBot />} />
+          <Route path="/studybot" element={<Navigate to="/profile?tab=overview" replace />} />
 
           {/* Courses */}
           <Route path="/course" element={<Navigate to="/learn/dp10" replace />} />
