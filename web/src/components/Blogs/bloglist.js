@@ -21,9 +21,11 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import Skeleton from '../ui/Skeleton';
+import SmartImage from '../ui/SmartImage';
+import UserAvatar from '../ui/UserAvatar';
 import {
   BLOG_CATEGORIES,
-  DEFAULT_BLOG_COVER,
+  getSmartBlogFallbackCover,
   stripHtml,
   estimateReadingTime,
   toDateObj,
@@ -211,8 +213,9 @@ function Bloglist() {
               <Link to={`/blog/${featuredBlog.id}`} className="group block">
                 <Card hover padding="p-0" className="overflow-hidden grid grid-cols-1 lg:grid-cols-12">
                   <div className="lg:col-span-6 aspect-[16/10] lg:aspect-auto lg:min-h-[300px] bg-stone-900 overflow-hidden">
-                    <img
-                      src={featuredBlog.CoverURL || DEFAULT_BLOG_COVER}
+                    <SmartImage
+                      src={featuredBlog.CoverURL}
+                      fallbackSrc={getSmartBlogFallbackCover(featuredBlog)}
                       alt={featuredBlog.Title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
@@ -237,10 +240,11 @@ function Bloglist() {
 
                     <div className="flex items-center justify-between pt-4 border-t border-heritage-border/70">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <img
-                          src={featuredBlog.author?.photo || '/logo192.png'}
-                          alt={featuredBlog.author?.name || 'Tác giả'}
-                          className="w-8 h-8 rounded-full object-cover border border-heritage-border shrink-0"
+                        <UserAvatar
+                          src={featuredBlog.author?.photo}
+                          name={featuredBlog.author?.name || 'Thành viên HTLVN'}
+                          sizeClass="w-8 h-8"
+                          textClass="text-xs"
                         />
                         <div className="min-w-0">
                           <p className="text-xs sm:text-sm font-bold text-heritage-ink truncate">
@@ -279,8 +283,9 @@ function Bloglist() {
                     <Card hover padding="p-0" className="h-full overflow-hidden flex flex-col justify-between">
                       <div>
                         <div className="relative aspect-[16/10] bg-stone-900 overflow-hidden">
-                          <img
-                            src={blog.CoverURL || DEFAULT_BLOG_COVER}
+                          <SmartImage
+                            src={blog.CoverURL}
+                            fallbackSrc={getSmartBlogFallbackCover(blog)}
                             alt={blog.Title}
                             loading="lazy"
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -311,10 +316,11 @@ function Bloglist() {
 
                       <div className="px-5 pb-5 pt-3 border-t border-heritage-border/60 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <img
-                            src={blog.author?.photo || '/logo192.png'}
-                            alt={blog.author?.name || 'Tác giả'}
-                            className="w-7 h-7 rounded-full object-cover border border-heritage-border shrink-0"
+                          <UserAvatar
+                            src={blog.author?.photo}
+                            name={blog.author?.name || 'Thành viên HTLVN'}
+                            sizeClass="w-7 h-7"
+                            textClass="text-[11px]"
                           />
                           <span className="text-xs font-semibold text-heritage-ink truncate">
                             {blog.author?.name || 'Thành viên HTLVN'}

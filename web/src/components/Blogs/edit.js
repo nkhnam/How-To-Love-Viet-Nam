@@ -2,15 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Timestamp, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { Editor } from '@tinymce/tinymce-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Upload, Save, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { auth, db, storage } from '../firebase';
+import { auth, db } from '../firebase';
 import MainLayout from '../layout/MainLayout';
 import Breadcrumb from '../ui/Breadcrumb';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import SmartImage from '../ui/SmartImage';
 import { BLOG_WRITABLE_CATEGORIES, DEFAULT_BLOG_COVER } from '../../utils/blogHelpers';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 
 /**
  * Edit Blog page preserving existing Firestore & TinyMCE contracts.
@@ -64,16 +65,9 @@ function BlogEdit() {
   };
 
   const handleEditorImageUpload = (blobInfo) =>
-    new Promise((resolve, reject) => {
-      const file = blobInfo.blob();
-      const storageRef = ref(storage, `editorImages/${Date.now()}_${file.name}`);
-      uploadBytes(storageRef, file)
-        .then(() => getDownloadURL(storageRef))
-        .then((url) => resolve(url))
-        .catch((error) => {
-          console.error('Error uploading image:', error);
-          reject('Tải ảnh lên thất bại');
-        });
+    uploadImageWithFallback(blobInfo.blob(), `editorImages/${Date.now()}_${blobInfo.filename()}`, {
+      maxWidth: 1000,
+      quality: 0.78,
     });
 
   const handleSubmit = async (e) => {
@@ -87,9 +81,10 @@ function BlogEdit() {
     try {
       let updatedCoverUrl = coverUrl;
       if (cover) {
-        const storageRef = ref(storage, `covers/${Date.now()}_${cover.name}`);
-        await uploadBytes(storageRef, cover);
-        updatedCoverUrl = await getDownloadURL(storageRef);
+        updatedCoverUrl = await uploadImageWithFallback(cover, `covers/${Date.now()}_${cover.name}`, {
+          maxWidth: 1200,
+          quality: 0.78,
+        });
       }
 
       await updateDoc(doc(db, 'blogs', id), {
@@ -191,8 +186,9 @@ function BlogEdit() {
                   </label>
 
                   <div className="rounded-xl overflow-hidden border border-heritage-border h-[140px] bg-stone-100">
-                    <img
-                      src={coverUrl || DEFAULT_BLOG_COVER}
+                    <SmartImage
+                      src={coverUrl}
+                      fallbackSrc={DEFAULT_BLOG_COVER}
                       alt="Xem trước ảnh bìa"
                       className="w-full h-full object-cover"
                     />

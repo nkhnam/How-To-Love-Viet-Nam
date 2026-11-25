@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus, Upload, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { auth, db, storage } from '../firebase';
+import { auth, db } from '../firebase';
 import AuthShell from './AuthShell';
 import Button from '../ui/Button';
 import { getFirebaseErrorMessage } from '../../utils/firebaseErrors';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 
 function Register() {
   const navigate = useNavigate();
@@ -47,9 +47,10 @@ function Register() {
       let photoURL = '';
 
       if (profilePic) {
-        const storageRef = ref(storage, `profilePics/${user.uid}`);
-        await uploadBytes(storageRef, profilePic);
-        photoURL = await getDownloadURL(storageRef);
+        photoURL = await uploadImageWithFallback(profilePic, `profilePics/${user.uid}`, {
+          maxWidth: 256,
+          quality: 0.8,
+        });
       }
 
       await setDoc(doc(db, 'users', user.uid), {

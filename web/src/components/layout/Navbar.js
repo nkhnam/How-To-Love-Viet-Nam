@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { db, auth } from '../firebase';
 import BrandLogo from '../ui/BrandLogo';
+import UserAvatar from '../ui/UserAvatar';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Trang chủ', end: true },
@@ -194,10 +195,11 @@ function Navbar({ transparentOnTop = false, backgroundColor }) {
                     : 'border-heritage-border bg-white text-heritage-ink hover:bg-heritage-paper'
                 }`}
               >
-                <img
-                  src={userDetails.photo || '/logo192.png'}
-                  alt={userDetails.firstName || 'Tài khoản'}
-                  className="w-[32px] h-[32px] rounded-full object-cover border border-heritage-border bg-heritage-cream"
+                <UserAvatar
+                  src={userDetails.photo}
+                  name={userDetails.firstName || 'Tài khoản'}
+                  sizeClass="w-[32px] h-[32px]"
+                  textClass="text-[11px]"
                 />
                 <span className="text-[13px] font-semibold max-w-[120px] truncate">
                   {userDetails.firstName || 'Thành viên'}
@@ -215,10 +217,11 @@ function Navbar({ transparentOnTop = false, backgroundColor }) {
                   className="absolute right-0 mt-[10px] w-[256px] rounded-[16px] bg-white border border-heritage-border shadow-xl py-[8px] text-heritage-ink z-50"
                 >
                   <div className="px-[16px] py-[10px] border-b border-heritage-border flex items-center gap-[10px]">
-                    <img
-                      src={userDetails.photo || '/logo192.png'}
-                      alt=""
-                      className="w-[40px] h-[40px] rounded-full object-cover border border-heritage-border shrink-0"
+                    <UserAvatar
+                      src={userDetails.photo}
+                      name={userDetails.firstName || 'Thành viên'}
+                      sizeClass="w-[40px] h-[40px]"
+                      textClass="text-[13px]"
                     />
                     <div className="min-w-0">
                       <p className="text-[14px] font-bold text-heritage-ink truncate">
@@ -326,10 +329,11 @@ function Navbar({ transparentOnTop = false, backgroundColor }) {
               {userDetails ? (
                 <div className="space-y-[4px]">
                   <div className="flex items-center gap-[10px] px-[12px] py-[8px]">
-                    <img
-                      src={userDetails.photo || '/logo192.png'}
-                      alt=""
-                      className="w-[38px] h-[38px] rounded-full object-cover border border-heritage-border"
+                    <UserAvatar
+                      src={userDetails.photo}
+                      name={userDetails.firstName || 'Thành viên'}
+                      sizeClass="w-[38px] h-[38px]"
+                      textClass="text-[12px]"
                     />
                     <div className="min-w-0">
                       <p className="text-[14px] font-bold truncate">{userDetails.firstName}</p>

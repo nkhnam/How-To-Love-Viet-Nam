@@ -12,8 +12,9 @@ import Card from '../ui/Card';
 import Modal from '../ui/Modal';
 import EmptyState from '../ui/EmptyState';
 import Skeleton from '../ui/Skeleton';
+import SmartImage from '../ui/SmartImage';
 import {
-  DEFAULT_BLOG_COVER,
+  getSmartBlogFallbackCover,
   stripHtml,
   formatViDate,
   getBlogDisplayCategory,
@@ -117,8 +118,9 @@ function MyPosts() {
               <Card key={blog.id} padding="p-0" className="overflow-hidden flex flex-col justify-between">
                 <div>
                   <div className="relative aspect-[16/10] bg-stone-900 overflow-hidden">
-                    <img
-                      src={blog.CoverURL || DEFAULT_BLOG_COVER}
+                    <SmartImage
+                      src={blog.CoverURL}
+                      fallbackSrc={getSmartBlogFallbackCover(blog)}
                       alt={blog.Title}
                       className="w-full h-full object-cover"
                     />

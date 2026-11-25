@@ -10,7 +10,9 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import Skeleton from '../ui/Skeleton';
-import { DEFAULT_BLOG_COVER, formatViDate, stripHtml } from '../../utils/blogHelpers';
+import SmartImage from '../ui/SmartImage';
+import UserAvatar from '../ui/UserAvatar';
+import { getSmartBlogFallbackCover, formatViDate, stripHtml } from '../../utils/blogHelpers';
 
 /**
  * Privacy-safe public member profile (never exposes member email).
@@ -94,10 +96,12 @@ function UserProfile() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <img
-                src={userDetails.photo || '/logo192.png'}
-                alt={userDetails.firstName}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow-md bg-white shrink-0"
+              <UserAvatar
+                src={userDetails.photo}
+                name={userDetails.firstName}
+                sizeClass="w-20 h-20"
+                textClass="text-xl"
+                className="border-2 border-white shadow-md"
               />
               <div className="space-y-1.5">
                 <div className="flex flex-wrap gap-2">
@@ -141,8 +145,9 @@ function UserProfile() {
               <Link key={blog.id} to={`/blog/${blog.id}`} className="group block">
                 <Card hover padding="p-0" className="h-full overflow-hidden flex flex-col justify-between">
                   <div>
-                    <img
-                      src={blog.CoverURL || DEFAULT_BLOG_COVER}
+                    <SmartImage
+                      src={blog.CoverURL}
+                      fallbackSrc={getSmartBlogFallbackCover(blog)}
                       alt={blog.Title}
                       className="w-full h-44 object-cover"
                     />

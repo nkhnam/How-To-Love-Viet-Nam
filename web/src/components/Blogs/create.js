@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Timestamp, collection, addDoc, doc, getDoc } from 'firebase/firestore';
 import { Editor } from '@tinymce/tinymce-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Send, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { auth, db, storage } from '../firebase';
+import { auth, db } from '../firebase';
 import MainLayout from '../layout/MainLayout';
 import Breadcrumb from '../ui/Breadcrumb';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import SmartImage from '../ui/SmartImage';
 import { BLOG_WRITABLE_CATEGORIES, DEFAULT_BLOG_COVER } from '../../utils/blogHelpers';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 
 /**
  * Create Blog page preserving TinyMCE + Firebase Storage uploads
@@ -62,22 +63,16 @@ function CreateBlog() {
 
   const uploadCoverImage = async (image) => {
     if (!image) return null;
-    const storageRef = ref(storage, `covers/${Date.now()}_${image.name}`);
-    await uploadBytes(storageRef, image);
-    return getDownloadURL(storageRef);
+    return uploadImageWithFallback(image, `covers/${Date.now()}_${image.name}`, {
+      maxWidth: 1200,
+      quality: 0.78,
+    });
   };
 
   const handleEditorImageUpload = (blobInfo) =>
-    new Promise((resolve, reject) => {
-      const file = blobInfo.blob();
-      const storageRef = ref(storage, `editorImages/${Date.now()}_${file.name}`);
-      uploadBytes(storageRef, file)
-        .then(() => getDownloadURL(storageRef))
-        .then((url) => resolve(url))
-        .catch((error) => {
-          console.error('Error uploading editor image:', error);
-          reject('Tải ảnh lên thất bại');
-        });
+    uploadImageWithFallback(blobInfo.blob(), `editorImages/${Date.now()}_${blobInfo.filename()}`, {
+      maxWidth: 1000,
+      quality: 0.78,
     });
 
   const handleSubmit = async (e) => {
@@ -203,8 +198,9 @@ function CreateBlog() {
                 </label>
 
                 <div className="rounded-xl overflow-hidden border border-heritage-border h-[140px] bg-stone-100">
-                  <img
+                  <SmartImage
                     src={coverPreview || DEFAULT_BLOG_COVER}
+                    fallbackSrc={DEFAULT_BLOG_COVER}
                     alt="Xem trước ảnh bìa"
                     className="w-full h-full object-cover"
                   />

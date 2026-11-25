@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import DOMPurify from 'dompurify';
@@ -24,10 +24,13 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Skeleton from '../ui/Skeleton';
+import SmartImage from '../ui/SmartImage';
+import UserAvatar from '../ui/UserAvatar';
 import {
   estimateReadingTime,
   formatViDate,
   getBlogDisplayCategory,
+  getSmartBlogFallbackCover,
 } from '../../utils/blogHelpers';
 
 /**
@@ -52,6 +55,38 @@ function BlogView() {
   const [replyContent, setReplyContent] = useState('');
   const [replyToIndex, setReplyToIndex] = useState(null);
   const [showReplies, setShowReplies] = useState({});
+  const bodyRef = useRef(null);
+
+  useEffect(() => {
+    const container = bodyRef.current;
+    if (!container) return undefined;
+
+    const replaceBrokenImg = (img) => {
+      if (!img || img.dataset.fallbackApplied) return;
+      img.dataset.fallbackApplied = '1';
+      const placeholder = document.createElement('div');
+      placeholder.className =
+        'my-4 rounded-xl border border-dashed border-heritage-border bg-heritage-paper/60 px-4 py-3 text-xs text-heritage-muted text-center';
+      placeholder.textContent = img.alt
+        ? `Hình ảnh minh họa (${img.alt}) hiện không khả dụng từ máy chủ lưu trữ cũ.`
+        : 'Hình ảnh minh họa trong bài viết hiện không khả dụng từ máy chủ lưu trữ cũ.';
+      img.replaceWith(placeholder);
+    };
+
+    const imgs = Array.from(container.querySelectorAll('img'));
+    const cleanups = [];
+    imgs.forEach((img) => {
+      if (img.complete && img.naturalWidth === 0) {
+        replaceBrokenImg(img);
+        return;
+      }
+      const onErr = () => replaceBrokenImg(img);
+      img.addEventListener('error', onErr);
+      cleanups.push(() => img.removeEventListener('error', onErr));
+    });
+
+    return () => cleanups.forEach((fn) => fn());
+  }, [blog?.Body]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -342,10 +377,11 @@ function BlogView() {
           {blog.author && (
             <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-y border-heritage-border py-3.5">
               <Link to={`/profile/${blog.author.uid}`} className="flex items-center gap-3 group">
-                <img
-                  src={blog.author.photo || '/logo192.png'}
-                  alt={blog.author.name}
-                  className="w-11 h-11 rounded-full object-cover border border-heritage-border"
+                <UserAvatar
+                  src={blog.author.photo}
+                  name={blog.author.name || 'Thành viên HTLVN'}
+                  sizeClass="w-11 h-11"
+                  textClass="text-sm"
                 />
                 <div>
                   <p className="font-bold text-sm sm:text-base text-heritage-ink group-hover:text-heritage-vermilion transition-colors">
@@ -385,11 +421,14 @@ function BlogView() {
         </header>
 
         {/* Cover */}
-        {blog.CoverURL && (
-          <div className="rounded-2xl overflow-hidden border border-heritage-border shadow-card bg-stone-100">
-            <img src={blog.CoverURL} alt={blog.Title} className="w-full max-h-[460px] object-cover" />
-          </div>
-        )}
+        <div className="rounded-2xl overflow-hidden border border-heritage-border shadow-card bg-stone-100">
+          <SmartImage
+            src={blog.CoverURL}
+            fallbackSrc={getSmartBlogFallbackCover(blog)}
+            alt={blog.Title}
+            className="w-full max-h-[460px] object-cover"
+          />
+        </div>
 
         {/* Lead Sapo */}
         {blog.Sapo && (
@@ -401,6 +440,7 @@ function BlogView() {
 
         {/* Rich Article Body */}
         <div
+          ref={bodyRef}
           className="text-base sm:text-[17px] text-heritage-ink leading-[1.85] space-y-4 [&_h1]:font-serif [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-8 [&_h2]:font-serif [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-7 [&_h3]:font-serif [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-6 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_li]:mb-1.5 [&_a]:text-heritage-vermilion [&_a]:underline [&_img]:rounded-xl [&_img]:my-5 [&_img]:mx-auto [&_blockquote]:border-l-4 [&_blockquote]:border-heritage-gold [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-heritage-muted"
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(blog.Body || '') }}
         />
@@ -446,10 +486,11 @@ function BlogView() {
             <Card padding="p-4" className="space-y-3">
               <form onSubmit={handleCommentSubmit} className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <img
-                    src={userDetails?.photo || '/logo192.png'}
-                    alt=""
-                    className="w-10 h-10 rounded-full object-cover border border-heritage-border shrink-0"
+                  <UserAvatar
+                    src={userDetails?.photo}
+                    name={userDetails?.firstName || 'Thành viên'}
+                    sizeClass="w-10 h-10"
+                    textClass="text-xs"
                   />
                   <textarea
                     rows={3}
@@ -492,10 +533,11 @@ function BlogView() {
                   <Card key={index} padding="p-5" className="space-y-3">
                     <div className="flex items-start gap-3">
                       <Link to={`/profile/${comment.userId}`} className="shrink-0">
-                        <img
-                          src={comment.userPhoto || '/logo192.png'}
-                          alt={comment.userName}
-                          className="w-9 h-9 rounded-full object-cover border border-heritage-border"
+                        <UserAvatar
+                          src={comment.userPhoto}
+                          name={comment.userName || 'Thành viên'}
+                          sizeClass="w-9 h-9"
+                          textClass="text-xs"
                         />
                       </Link>
                       <div className="flex-1 min-w-0 space-y-1.5">
@@ -624,10 +666,12 @@ function BlogView() {
                           <div className="space-y-2.5 border-l-2 border-heritage-border pl-4">
                             {comment.replies.map((reply, rIdx) => (
                               <div key={rIdx} className="flex items-start gap-2.5">
-                                <img
-                                  src={reply.userPhoto || '/logo192.png'}
-                                  alt={reply.userName}
-                                  className="w-7 h-7 rounded-full object-cover border border-heritage-border shrink-0 mt-0.5"
+                                <UserAvatar
+                                  src={reply.userPhoto}
+                                  name={reply.userName || 'Thành viên'}
+                                  sizeClass="w-7 h-7"
+                                  textClass="text-[11px]"
+                                  className="mt-0.5"
                                 />
                                 <div className="flex-1 min-w-0 space-y-1">
                                   <div className="flex items-center justify-between gap-2">

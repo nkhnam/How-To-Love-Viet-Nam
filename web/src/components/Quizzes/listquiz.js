@@ -21,6 +21,7 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import Skeleton from '../ui/Skeleton';
+import UserAvatar from '../ui/UserAvatar';
 import { QUIZ_CATEGORIES, getQuizMeta, getQuizCover, formatRelativeTimeVi } from '../../data/quizMeta';
 
 /**
@@ -286,10 +287,11 @@ function QuizzesList() {
 
                     <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-heritage-border/60 mt-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <img
-                          src={quiz.author?.photo || '/logo192.png'}
-                          alt={quiz.author?.name || 'Tác giả'}
-                          className="w-7 h-7 rounded-full object-cover border border-heritage-border shrink-0"
+                        <UserAvatar
+                          src={quiz.author?.photo}
+                          name={quiz.author?.name || 'Thành viên HTLVN'}
+                          sizeClass="w-7 h-7"
+                          textClass="text-[11px]"
                         />
                         <span className="text-xs font-semibold text-heritage-ink truncate">
                           {quiz.author?.name || 'Thành viên HTLVN'}

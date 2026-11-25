@@ -20,6 +20,7 @@ import { auth, realtimeDb, db } from '../firebase';
 import Navbar from '../layout/Navbar';
 import Button from '../ui/Button';
 import EmptyState from '../ui/EmptyState';
+import UserAvatar from '../ui/UserAvatar';
 
 function formatRelativeVi(ts) {
   if (!ts) return '';
@@ -326,11 +327,7 @@ function Messages() {
                       }}
                       className="w-full p-3.5 flex items-center gap-3 hover:bg-heritage-paper text-left transition-colors cursor-pointer"
                     >
-                      <img
-                        src={u.photo || '/logo192.png'}
-                        alt={u.firstName}
-                        className="w-11 h-11 rounded-full object-cover border border-heritage-border shrink-0"
-                      />
+                      <UserAvatar src={u.photo} name={u.firstName} sizeClass="w-11 h-11" textClass="text-sm" />
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-heritage-ink truncate">{u.firstName}</p>
                         <p className="text-xs text-heritage-jade">Nhấn để mở cuộc trò chuyện</p>
@@ -357,11 +354,7 @@ function Messages() {
                         active ? 'bg-heritage-vermilion-soft/70' : 'hover:bg-heritage-paper/70'
                       }`}
                     >
-                      <img
-                        src={conv.photo || '/logo192.png'}
-                        alt={conv.name}
-                        className="w-11 h-11 rounded-full object-cover border border-heritage-border shrink-0"
-                      />
+                      <UserAvatar src={conv.photo} name={conv.name} sizeClass="w-11 h-11" textClass="text-sm" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-bold text-heritage-ink truncate">{conv.name}</p>
@@ -405,10 +398,11 @@ function Messages() {
                       <ArrowLeft className="w-5 h-5" />
                     </button>
                     <Link to={`/profile/${userId}`} className="flex items-center gap-3 min-w-0 group">
-                      <img
-                        src={otherUserProfile?.photo || '/logo192.png'}
-                        alt={otherUserProfile?.firstName}
-                        className="w-10 h-10 rounded-full object-cover border border-heritage-border shrink-0"
+                      <UserAvatar
+                        src={otherUserProfile?.photo}
+                        name={otherUserProfile?.firstName || 'Thành viên'}
+                        sizeClass="w-10 h-10"
+                        textClass="text-xs"
                       />
                       <div className="min-w-0">
                         <p className="font-bold text-sm sm:text-base text-heritage-ink group-hover:text-heritage-vermilion truncate">
@@ -436,10 +430,11 @@ function Messages() {
                           className={`group flex items-end gap-2 ${isSelf ? 'justify-end' : 'justify-start'}`}
                         >
                           {!isSelf && (
-                            <img
-                              src={avatar || '/logo192.png'}
-                              alt=""
-                              className="w-7 h-7 rounded-full object-cover border border-heritage-border shrink-0"
+                            <UserAvatar
+                              src={avatar}
+                              name={otherUserProfile?.firstName || 'Thành viên'}
+                              sizeClass="w-7 h-7"
+                              textClass="text-[11px]"
                             />
                           )}
 

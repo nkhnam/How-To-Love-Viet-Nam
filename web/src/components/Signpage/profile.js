@@ -10,7 +10,6 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   User,
   Compass,
@@ -32,7 +31,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { auth, db, storage } from '../firebase';
+import { auth, db } from '../firebase';
 import MainLayout from '../layout/MainLayout';
 import Breadcrumb from '../ui/Breadcrumb';
 import Badge from '../ui/Badge';
@@ -41,11 +40,14 @@ import Card from '../ui/Card';
 import Tabs from '../ui/Tabs';
 import EmptyState from '../ui/EmptyState';
 import Skeleton from '../ui/Skeleton';
+import SmartImage from '../ui/SmartImage';
+import UserAvatar from '../ui/UserAvatar';
 import StudyBot from '../StudyBot';
 import { usePassport } from '../../hooks/usePassport';
 import { PROVINCES } from '../../data/provinces';
 import { getQuizMeta, formatRelativeTimeVi } from '../../data/quizMeta';
-import { DEFAULT_BLOG_COVER, formatViDate, stripHtml } from '../../utils/blogHelpers';
+import { getSmartBlogFallbackCover, formatViDate, stripHtml } from '../../utils/blogHelpers';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 
 const VALID_TABS = ['overview', 'content', 'settings'];
 
@@ -216,9 +218,10 @@ function Profile() {
     try {
       const updated = { firstName: cleanName };
       if (avatarFile) {
-        const storageRef = ref(storage, `profilePics/${authUser.uid}`);
-        await uploadBytes(storageRef, avatarFile);
-        updated.photo = await getDownloadURL(storageRef);
+        updated.photo = await uploadImageWithFallback(avatarFile, `profilePics/${authUser.uid}`, {
+          maxWidth: 256,
+          quality: 0.8,
+        });
       }
       await updateDoc(doc(db, 'users', authUser.uid), updated);
       setUserDetails((prev) => ({ ...prev, ...updated }));
@@ -283,10 +286,12 @@ function Profile() {
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4 sm:gap-5">
-              <img
-                src={avatarPreview || userDetails?.photo || '/logo192.png'}
-                alt={userDetails?.firstName || 'Học sinh'}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-white shadow-md bg-white shrink-0"
+              <UserAvatar
+                src={avatarPreview || userDetails?.photo}
+                name={userDetails?.firstName || 'Học sinh'}
+                sizeClass="w-20 h-20 sm:w-24 sm:h-24"
+                textClass="text-2xl"
+                className="border-2 border-white shadow-md"
               />
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -515,8 +520,9 @@ function Profile() {
                   {userBlogs.map((blog) => (
                     <Card key={blog.id} padding="p-0" className="overflow-hidden flex flex-col justify-between">
                       <div>
-                        <img
-                          src={blog.CoverURL || DEFAULT_BLOG_COVER}
+                        <SmartImage
+                          src={blog.CoverURL}
+                          fallbackSrc={getSmartBlogFallbackCover(blog)}
                           alt={blog.Title}
                           className="w-full h-40 object-cover"
                         />
@@ -607,10 +613,11 @@ function Profile() {
               <h2 className="font-serif text-xl font-bold text-heritage-ink">Chỉnh sửa thông tin cá nhân</h2>
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <img
-                    src={avatarPreview || '/logo192.png'}
-                    alt="Xem trước ảnh đại diện"
-                    className="w-16 h-16 rounded-full object-cover border border-heritage-border"
+                  <UserAvatar
+                    src={avatarPreview || userDetails?.photo}
+                    name={firstName || userDetails?.firstName || 'Học sinh'}
+                    sizeClass="w-16 h-16"
+                    textClass="text-lg"
                   />
                   <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-heritage-border bg-heritage-cream/60 hover:bg-heritage-paper text-xs font-semibold text-heritage-ink cursor-pointer">
                     <Upload className="w-4 h-4 text-heritage-vermilion" />
@@ -689,10 +696,11 @@ function Profile() {
                       className="flex items-center justify-between gap-3 p-3 rounded-xl border border-heritage-border bg-heritage-cream/40"
                     >
                       <Link to={`/profile/${member.id}`} className="flex items-center gap-2.5 min-w-0 group">
-                        <img
-                          src={member.photo || '/logo192.png'}
-                          alt={member.firstName}
-                          className="w-10 h-10 rounded-full object-cover border border-heritage-border shrink-0"
+                        <UserAvatar
+                          src={member.photo}
+                          name={member.firstName}
+                          sizeClass="w-10 h-10"
+                          textClass="text-xs"
                         />
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-heritage-ink group-hover:text-heritage-vermilion truncate">
