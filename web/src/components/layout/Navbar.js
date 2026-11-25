@@ -23,7 +23,7 @@ import UserAvatar from '../ui/UserAvatar';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Trang chủ', end: true },
-  { to: '/provinces', label: '63 Tỉnh thành' },
+  { to: '/provinces', label: '34 Tỉnh thành' },
   { to: '/learn', label: 'Học tập' },
   { to: '/listquiz', label: 'Quiz' },
   { to: '/ai', label: 'Trợ lý AI' },
@@ -233,7 +233,7 @@ function Navbar({ transparentOnTop = false, backgroundColor }) {
 
                   <div className="py-[4px]">
                     <DropdownLink to="/profile" icon={User} label="Trang cá nhân" />
-                    <DropdownLink to="/provinces?filter=discovered" icon={Compass} label="Hộ chiếu 63 tỉnh" />
+                    <DropdownLink to="/provinces?filter=discovered" icon={Compass} label="Hộ chiếu 34 tỉnh" />
                     <DropdownLink to="/messages" icon={MessageSquare} label="Hộp thư" />
                   </div>
 
@@ -344,7 +344,7 @@ function Navbar({ transparentOnTop = false, backgroundColor }) {
                   <DropdownLink
                     to="/provinces?filter=discovered"
                     icon={Compass}
-                    label="Hộ chiếu 63 tỉnh"
+                    label="Hộ chiếu 34 tỉnh"
                     onClick={() => setMobileOpen(false)}
                   />
                   <DropdownLink to="/blogcreate" icon={PenSquare} label="Viết blog" onClick={() => setMobileOpen(false)} />

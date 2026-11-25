@@ -143,8 +143,8 @@ function CourseDetailPage() {
           <EmptyState
             icon={Clock}
             title="Nội dung bài giảng đang được cập nhật"
-            description="Đội ngũ biên soạn đang hoàn thiện giáo trình GDĐP 12. Trong lúc chờ đợi, bạn có thể khám phá Atlas 63 tỉnh thành hoặc hỏi Trợ lý AI."
-            actionLabel="Khám phá 63 tỉnh thành"
+            description="Đội ngũ biên soạn đang hoàn thiện giáo trình GDĐP 12. Trong lúc chờ đợi, bạn có thể khám phá Atlas 34 tỉnh thành hoặc hỏi Trợ lý AI."
+            actionLabel="Khám phá 34 tỉnh thành"
             actionTo="/provinces"
           />
         ) : (

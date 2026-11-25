@@ -11,8 +11,8 @@ const REGION_FILL = {
 };
 
 /**
- * Interactive 63-province SVG Map with zoom by region, hover tooltip,
- * Heritage Passport gold fills, and mobile tap preview support.
+ * Interactive 34-province SVG Map (merged across all 63 geographic territories)
+ * with region zoom, hover preview, and Heritage Passport progress fills.
  */
 function VietnamSvgMap({
   activeRegion = 'all',
@@ -85,6 +85,11 @@ function VietnamSvgMap({
             <p className="text-[11px] text-heritage-muted">
               {previewProvince.regionLabel} · {previewCardCount} thẻ
             </p>
+            {previewProvince.isMerged && (
+              <p className="text-[10px] text-heritage-vermilion font-medium truncate">
+                Gồm: {previewProvince.mergedFrom.join(', ')}
+              </p>
+            )}
             {discoveredSet?.has(previewProvince.slug) && (
               <p className="text-[11px] font-semibold text-amber-700 inline-flex items-center gap-1 mt-0.5">
                 <CheckCircle2 className="w-3 h-3 text-heritage-jade" />
@@ -101,7 +106,7 @@ function VietnamSvgMap({
           viewBox={viewBox}
           className="w-full h-[460px] sm:h-[560px] select-none transition-all duration-300"
           role="img"
-          aria-label="Bản đồ tương tác 63 tỉnh thành Việt Nam"
+          aria-label="Bản đồ tương tác 34 tỉnh thành Việt Nam"
         >
           {VIETNAM_MAP_PATHS.map((item) => {
             const isHovered = hoveredSlug === item.slug;
@@ -141,7 +146,7 @@ function VietnamSvgMap({
                     d={d}
                     fill={fill}
                     stroke={isHovered ? '#7F1D1D' : '#FAF7F2'}
-                    strokeWidth={isHovered ? 1.4 : 0.7}
+                    strokeWidth={isHovered ? 1.15 : 0.55}
                     className="transition-colors duration-150"
                   />
                 ))}

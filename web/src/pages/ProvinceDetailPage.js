@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, useLocation, Navigate, Link } from 'react-router-dom';
 import {
   MapPin,
   Users,
@@ -17,6 +17,7 @@ import {
   Sparkles,
   ArrowRight,
   Info,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import MainLayout from '../components/layout/MainLayout';
@@ -29,15 +30,16 @@ import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
 import FlashcardDeck from '../components/provinces/FlashcardDeck';
 import ProvinceGallery from '../components/provinces/ProvinceGallery';
-import { PROVINCES, PROVINCE_BY_SLUG } from '../data/provinces';
+import { PROVINCES, PROVINCE_BY_SLUG, SLUG_MIGRATION_MAP } from '../data/provinces';
 import { usePassport } from '../hooks/usePassport';
 
 /**
- * Unified 4-Tab Detail Page for all 63 provinces:
- * Tab 1: Overview & Culture · Tab 2: 360° Lazy Street View · Tab 3: 3D Flashcards · Tab 4: Gallery Lightbox
+ * Unified 4-Tab Detail Page for all 34 official provinces & cities (NQ 202/2025/QH15):
+ * Supports merged constituent sub-regions, multi-view 360 tours, 3D Flashcards, and Gallery.
  */
 function ProvinceDetailPage() {
   const { slug } = useParams();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const province = PROVINCE_BY_SLUG[slug];
 
@@ -50,11 +52,15 @@ function ProvinceDetailPage() {
 
   const [slideIndex, setSlideIndex] = useState(0);
   const [pauseSlide, setPauseSlide] = useState(false);
+  const [activeSubIdx, setActiveSubIdx] = useState(0);
+  const [active360Idx, setActive360Idx] = useState(0);
 
   const { isDiscovered, toggleDiscovered, masteredSet, setCardMastered } = usePassport();
 
   useEffect(() => {
     setSlideIndex(0);
+    setActiveSubIdx(0);
+    setActive360Idx(0);
   }, [slug]);
 
   const slides = useMemo(() => {
@@ -81,12 +87,24 @@ function ProvinceDetailPage() {
     };
   }, [province]);
 
+  if (!province && SLUG_MIGRATION_MAP[slug]) {
+    return <Navigate to={`/provinces/${SLUG_MIGRATION_MAP[slug]}${location.search}`} replace />;
+  }
+
   if (!province) {
     return <NotFound />;
   }
 
   const discovered = isDiscovered(province.slug);
   const totalCards = (province.dltcCards?.length || 0) + (province.dtlsCards?.length || 0);
+  const constituents = province.constituents || [];
+  const activeConstituent = constituents[activeSubIdx] || constituents[0] || province;
+  const views360 = province.views360?.length
+    ? province.views360
+    : province.view
+    ? [{ label: province.name, url: province.view }]
+    : [];
+  const active360 = views360[active360Idx] || views360[0] || null;
 
   const handleTabChange = (nextTab) => {
     const next = new URLSearchParams(searchParams);
@@ -163,7 +181,7 @@ function ProvinceDetailPage() {
             className="mb-3"
             items={[
               { label: 'Trang chủ', to: '/' },
-              { label: '63 Tỉnh thành', to: '/provinces' },
+              { label: '34 Tỉnh thành', to: '/provinces' },
               { label: province.regionLabel, to: `/provinces?region=${province.region}` },
               { label: province.name },
             ]}
@@ -173,6 +191,10 @@ function ProvinceDetailPage() {
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <Badge variant="glass">{province.regionLabel}</Badge>
+                <Badge variant="glass">{province.unitType}</Badge>
+                {province.isMerged && (
+                  <Badge variant="glass">Hợp nhất: {province.mergedFrom.join(' + ')}</Badge>
+                )}
                 {totalCards > 0 && (
                   <Badge variant="glass">
                     <Layers className="w-3 h-3" />
@@ -230,19 +252,76 @@ function ProvinceDetailPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {activeTab === 'overview' && (
           <div className="space-y-8">
+            {/* Official 2025 Resolution Summary Banner */}
+            <Card className="bg-heritage-paper border-heritage-border space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                  <Badge variant="gold" className="mb-1.5">
+                    Nghị quyết 202/2025/QH15
+                  </Badge>
+                  <h2 className="font-serif text-xl sm:text-2xl font-bold text-heritage-ink">
+                    Thông tin hành chính sau sắp xếp ({province.name})
+                  </h2>
+                  <p className="text-sm text-heritage-muted mt-1">{province.resolutionNote}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="bg-white rounded-xl border border-heritage-border p-3.5">
+                  <p className="text-xs font-semibold text-heritage-muted">Diện tích tự nhiên</p>
+                  <p className="font-serif text-lg font-bold text-heritage-ink mt-0.5">{province.areaKm2}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-heritage-border p-3.5">
+                  <p className="text-xs font-semibold text-heritage-muted">Quy mô dân số (2025)</p>
+                  <p className="font-serif text-lg font-bold text-heritage-vermilion mt-0.5">
+                    {province.population2025}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl border border-heritage-border p-3.5 flex items-center gap-2.5">
+                  <Building2 className="w-5 h-5 text-heritage-jade shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-heritage-muted">Trung tâm hành chính</p>
+                    <p className="font-serif text-base font-bold text-heritage-ink">{province.adminCenter}</p>
+                  </div>
+                </div>
+              </div>
+
+              {constituents.length > 1 && (
+                <div className="pt-3 border-t border-heritage-border/80 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold text-heritage-ink mr-1">
+                    Xem tư liệu từng vùng hợp thành:
+                  </span>
+                  {constituents.map((sub, idx) => (
+                    <button
+                      key={sub.slug}
+                      type="button"
+                      onClick={() => setActiveSubIdx(idx)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer border ${
+                        activeSubIdx === idx
+                          ? 'bg-heritage-vermilion text-white border-heritage-vermilion'
+                          : 'bg-white text-heritage-ink border-heritage-border hover:bg-white/80'
+                      }`}
+                    >
+                      {sub.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Card>
+
             {/* Block 1: Geography & Overview */}
             <Card className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-5">
-                {province.map ? (
+                {activeConstituent.map ? (
                   <img
-                    src={province.map}
-                    alt={`Bản đồ địa lý ${province.name}`}
+                    src={activeConstituent.map}
+                    alt={`Bản đồ địa lý ${activeConstituent.name}`}
                     className="w-full rounded-xl border border-heritage-border object-cover bg-heritage-paper"
                   />
                 ) : (
                   <img
-                    src={province.coverImage}
-                    alt={province.name}
+                    src={activeConstituent.coverImage}
+                    alt={activeConstituent.name}
                     className="w-full rounded-xl border border-heritage-border object-cover"
                   />
                 )}
@@ -254,7 +333,7 @@ function ProvinceDetailPage() {
                     Đặc điểm tự nhiên &amp; dân cư
                   </Badge>
                   <h2 className="font-serif text-2xl sm:text-3xl font-bold text-heritage-ink">
-                    Tổng quan về {province.name}
+                    Tổng quan về {constituents.length > 1 ? activeConstituent.name : province.name}
                   </h2>
                 </div>
 
@@ -265,7 +344,7 @@ function ProvinceDetailPage() {
                     </div>
                     <div>
                       <p className="font-bold text-heritage-ink">Giới thiệu</p>
-                      <p className="text-heritage-muted mt-0.5">{province.introduction}</p>
+                      <p className="text-heritage-muted mt-0.5">{activeConstituent.introduction}</p>
                     </div>
                   </div>
 
@@ -274,8 +353,10 @@ function ProvinceDetailPage() {
                       <Users className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="font-bold text-heritage-ink">Dân số</p>
-                      <p className="text-heritage-muted mt-0.5">{province.popularity}</p>
+                      <p className="font-bold text-heritage-ink">Dân số &amp; Diện tích</p>
+                      <p className="text-heritage-muted mt-0.5">
+                        {constituents.length > 1 ? activeConstituent.popularity : province.popularity}
+                      </p>
                     </div>
                   </div>
 
@@ -285,7 +366,7 @@ function ProvinceDetailPage() {
                     </div>
                     <div>
                       <p className="font-bold text-heritage-ink">Vị trí địa lý</p>
-                      <p className="text-heritage-muted mt-0.5">{province.location}</p>
+                      <p className="text-heritage-muted mt-0.5">{activeConstituent.location}</p>
                     </div>
                   </div>
                 </div>
@@ -300,7 +381,7 @@ function ProvinceDetailPage() {
                     Bản sắc địa phương
                   </Badge>
                   <h2 className="font-serif text-2xl sm:text-3xl font-bold text-heritage-ink">
-                    Văn hóa, Kiến trúc &amp; Ẩm thực
+                    Văn hóa, Kiến trúc &amp; Ẩm thực ({activeConstituent.name})
                   </h2>
                 </div>
 
@@ -311,7 +392,7 @@ function ProvinceDetailPage() {
                     </div>
                     <div>
                       <p className="font-bold text-heritage-ink">Ẩm thực đặc trưng</p>
-                      <p className="text-heritage-muted mt-0.5">{province.cuisine}</p>
+                      <p className="text-heritage-muted mt-0.5">{activeConstituent.cuisine}</p>
                     </div>
                   </div>
 
@@ -321,7 +402,7 @@ function ProvinceDetailPage() {
                     </div>
                     <div>
                       <p className="font-bold text-heritage-ink">Công trình &amp; Kiến trúc</p>
-                      <p className="text-heritage-muted mt-0.5">{province.building}</p>
+                      <p className="text-heritage-muted mt-0.5">{activeConstituent.building}</p>
                     </div>
                   </div>
 
@@ -331,24 +412,24 @@ function ProvinceDetailPage() {
                     </div>
                     <div>
                       <p className="font-bold text-heritage-ink">Văn hóa &amp; Lễ hội</p>
-                      <p className="text-heritage-muted mt-0.5">{province.culture}</p>
+                      <p className="text-heritage-muted mt-0.5">{activeConstituent.culture}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="lg:col-span-5 order-1 lg:order-2">
-                {province.map2 ? (
+                {activeConstituent.map2 ? (
                   <img
-                    src={province.map2}
-                    alt={`Văn hóa và lịch sử ${province.name}`}
+                    src={activeConstituent.map2}
+                    alt={`Văn hóa và lịch sử ${activeConstituent.name}`}
                     loading="lazy"
                     className="w-full rounded-xl border border-heritage-border object-cover bg-heritage-paper"
                   />
                 ) : (
                   <img
-                    src={province.galleryImages?.[0] || province.coverImage}
-                    alt={province.name}
+                    src={province.galleryImages?.[0] || activeConstituent.coverImage}
+                    alt={activeConstituent.name}
                     loading="lazy"
                     className="w-full rounded-xl border border-heritage-border object-cover"
                   />
@@ -394,7 +475,9 @@ function ProvinceDetailPage() {
 
               <Link
                 to={`/ai?tab=chat&q=${encodeURIComponent(
-                  `Hãy tóm tắt những nét nổi bật về lịch sử, địa lý và văn hóa của ${province.name}.`,
+                  `Hãy tóm tắt những nét nổi bật về lịch sử, địa lý và văn hóa của ${province.name}${
+                    province.isMerged ? ` (sau sáp nhập từ ${province.mergedFrom.join(', ')})` : ''
+                  }.`,
                 )}`}
                 className="text-left p-5 rounded-2xl bg-gradient-to-br from-heritage-jade to-teal-800 text-white shadow-card hover:-translate-y-0.5 transition-all"
               >
@@ -418,7 +501,7 @@ function ProvinceDetailPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h2 className="font-serif text-2xl font-bold text-heritage-ink">
-                  Nhìn ngắm {province.name} 360 độ
+                  Nhìn ngắm {active360?.label || province.name} 360 độ
                 </h2>
                 <p className="text-sm text-heritage-muted">
                   Kéo chuột hoặc chạm để xoay toàn cảnh và phóng to/thu nhỏ không gian.
@@ -430,11 +513,30 @@ function ProvinceDetailPage() {
               </Badge>
             </div>
 
-            {province.view ? (
+            {views360.length > 1 && (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {views360.map((v, idx) => (
+                  <button
+                    key={v.label}
+                    type="button"
+                    onClick={() => setActive360Idx(idx)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer border ${
+                      active360Idx === idx
+                        ? 'bg-heritage-jade text-white border-heritage-jade'
+                        : 'bg-heritage-paper text-heritage-ink border-heritage-border hover:bg-white'
+                    }`}
+                  >
+                    Điểm nhìn: {v.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {active360?.url ? (
               <div className="rounded-xl overflow-hidden border border-heritage-border bg-stone-900">
                 <iframe
-                  title={`Góc nhìn 360 độ ${province.name}`}
-                  src={province.view}
+                  title={`Góc nhìn 360 độ ${active360.label}`}
+                  src={active360.url}
                   className="w-full h-[420px] sm:h-[540px]"
                   style={{ border: 0 }}
                   allowFullScreen
@@ -480,7 +582,7 @@ function ProvinceDetailPage() {
 
           <Button to="/provinces" variant="ghost">
             <Compass className="w-4 h-4" />
-            Về bản đồ 63 tỉnh
+            Về bản đồ 34 tỉnh thành
           </Button>
 
           {neighbors.next && (

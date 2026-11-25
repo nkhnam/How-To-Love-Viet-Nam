@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { MessageSquare, Compass, FileText, Heart } from 'lucide-react';
 import { db } from '../firebase';
+import { PROVINCE_BY_SLUG, SLUG_MIGRATION_MAP } from '../../data/provinces';
 import MainLayout from '../layout/MainLayout';
 import Breadcrumb from '../ui/Breadcrumb';
 import Badge from '../ui/Badge';
@@ -41,7 +42,13 @@ function UserProfile() {
           setUserDetails({
             firstName: data.firstName || 'Thành viên HTLVN',
             photo: data.photo || '',
-            discoveredCount: Array.isArray(data.discoveredProvinces) ? data.discoveredProvinces.length : 0,
+            discoveredCount: Array.isArray(data.discoveredProvinces)
+              ? new Set(
+                  data.discoveredProvinces
+                    .map((s) => SLUG_MIGRATION_MAP[s] || s)
+                    .filter((s) => PROVINCE_BY_SLUG[s])
+                ).size
+              : 0,
           });
         }
         setUserBlogs(blogsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
@@ -109,7 +116,7 @@ function UserProfile() {
                   {userDetails.discoveredCount > 0 && (
                     <Badge variant="gold">
                       <Compass className="w-3.5 h-3.5" />
-                      {userDetails.discoveredCount}/63 tỉnh đã khám phá
+                      {userDetails.discoveredCount}/34 tỉnh thành đã khám phá
                     </Badge>
                   )}
                 </div>

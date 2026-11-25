@@ -84,7 +84,7 @@ function App() {
           <Route path="/learn/:courseId" element={<CourseDetailPage />} />
           <Route path="/elearning" element={<Navigate to="/learn" replace />} />
 
-          {/* Unified 63 Provinces Atlas & Detail */}
+          {/* Unified 34 Provinces Atlas & Detail */}
           <Route path="/provinces" element={<ProvincesAtlasPage />} />
           <Route path="/provinces/:slug" element={<ProvinceDetailPage />} />
 

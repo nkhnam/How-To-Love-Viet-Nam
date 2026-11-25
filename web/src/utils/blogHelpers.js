@@ -64,6 +64,12 @@ export function getSmartBlogFallbackCover(blog) {
     if (provName && haystack.includes(provName) && prov.coverImage) {
       return prov.coverImage;
     }
+    for (const sub of prov.constituents || []) {
+      const subName = (sub.name || '').toLowerCase();
+      if (subName && haystack.includes(subName) && sub.coverImage) {
+        return sub.coverImage;
+      }
+    }
   }
 
   const seed = String(blog?.id || blog?.Title || 'htlvn');

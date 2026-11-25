@@ -17,7 +17,7 @@ function Footer() {
             </Link>
             <p className="text-[14px] leading-relaxed text-stone-400 max-w-md">
               Dự án giáo dục STEM hỗ trợ học sinh THPT học tập và ôn luyện bộ môn Lịch Sử và Giáo dục Địa phương theo
-              chương trình GDPT 2018 qua bản đồ 63 tỉnh thành, Flashcard 3D, Quiz và Trợ lý AI.
+              chương trình GDPT 2018 qua bản đồ 34 tỉnh thành, Flashcard 3D, Quiz và Trợ lý AI.
             </p>
             <div className="flex flex-wrap items-center gap-[16px] pt-[4px] text-[13px] text-stone-400">
               <span className="inline-flex items-center gap-[6px]">
@@ -39,7 +39,7 @@ function Footer() {
             <ul className="space-y-[10px] text-[14px]">
               <li>
                 <Link to="/provinces" className="hover:text-white transition-colors">
-                  Atlas 63 Tỉnh thành
+                  Atlas 34 Tỉnh thành
                 </Link>
               </li>
               <li>
@@ -114,7 +114,7 @@ function Footer() {
 
         <div className="mt-[40px] pt-[24px] border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-[12px] text-[13px] text-stone-500">
           <p>© {new Date().getFullYear()} HTLVN — How To Love Vietnam. Dự án STEM Lịch Sử &amp; GDĐP.</p>
-          <p>63 Tỉnh thành · Di sản Việt Nam Đương đại</p>
+          <p>34 Tỉnh thành · Di sản Việt Nam Đương đại</p>
         </div>
       </div>
     </footer>

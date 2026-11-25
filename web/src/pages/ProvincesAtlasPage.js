@@ -28,7 +28,8 @@ function normalizeVietnamese(str) {
 }
 
 /**
- * Interactive 63-Province Vietnam Atlas with bidirectional SVG map + searchable card grid
+ * Interactive 34-Province Vietnam Atlas (Resolution 202/2025/QH15)
+ * with bidirectional SVG map, searchable card grid (including former province names),
  * and the Heritage Passport progress tracker.
  */
 function ProvincesAtlasPage() {
@@ -75,7 +76,9 @@ function ProvincesAtlasPage() {
       return (
         normalizeVietnamese(p.name).includes(q) ||
         normalizeVietnamese(p.regionLabel).includes(q) ||
-        normalizeVietnamese(p.slug).includes(q)
+        normalizeVietnamese(p.slug).includes(q) ||
+        (p.mergedFrom || []).some((oldName) => normalizeVietnamese(oldName).includes(q)) ||
+        (p.aliases || []).some((alias) => normalizeVietnamese(alias).includes(q))
       );
     });
   }, [region, passportFilter, queryText, discoveredSet]);
@@ -108,13 +111,13 @@ function ProvincesAtlasPage() {
         {/* Top Hero + Heritage Passport Progress Card */}
         <div className="bg-white rounded-2xl border border-heritage-border shadow-card p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="max-w-2xl space-y-2">
-            <Badge variant="vermilion">Atlas Giáo dục Địa phương</Badge>
+            <Badge variant="vermilion">Nghị quyết 202/2025/QH15 · Atlas 34 Đơn vị Hành chính</Badge>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-heritage-ink">
-              Khám phá 63 Tỉnh thành Việt Nam
+              Khám phá 34 Tỉnh, Thành phố Việt Nam
             </h1>
             <p className="text-heritage-muted text-sm sm:text-base leading-relaxed">
-              Chọn một tỉnh thành trên bản đồ hoặc tìm kiếm nhanh để xem thông tin văn hóa – lịch sử, góc nhìn 360°,
-              thẻ Flashcard 3D và đóng dấu vào <strong className="text-heritage-ink">Hộ chiếu Việt Nam</strong>.
+              Cập nhật theo bản đồ sáp nhập 34 tỉnh, thành phố trực thuộc Trung ương từ 01/07/2025. Tìm kiếm được cả
+              tên tỉnh cũ (vd: Quảng Nam, Bình Dương, Hà Giang...) để xem trọn vẹn di sản, góc nhìn 360° và Flashcard 3D.
             </p>
           </div>
 
@@ -138,18 +141,14 @@ function ProvincesAtlasPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="bg-white rounded-lg py-1.5 px-2 border border-heritage-border/70">
-                <span className="text-heritage-muted block">Miền Bắc</span>
-                <strong className="text-heritage-ink">{stats.byRegion.bac}/25</strong>
-              </div>
-              <div className="bg-white rounded-lg py-1.5 px-2 border border-heritage-border/70">
-                <span className="text-heritage-muted block">Miền Trung</span>
-                <strong className="text-heritage-ink">{stats.byRegion.trung}/19</strong>
-              </div>
-              <div className="bg-white rounded-lg py-1.5 px-2 border border-heritage-border/70">
-                <span className="text-heritage-muted block">Miền Nam</span>
-                <strong className="text-heritage-ink">{stats.byRegion.nam}/19</strong>
-              </div>
+              {REGIONS.filter((r) => r.id !== 'all').map((r) => (
+                <div key={r.id} className="bg-white rounded-lg py-1.5 px-2 border border-heritage-border/70">
+                  <span className="text-heritage-muted block">{r.label}</span>
+                  <strong className="text-heritage-ink">
+                    {stats.byRegion[r.id] || 0}/{r.count}
+                  </strong>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -335,16 +334,23 @@ function ProvincesAtlasPage() {
                         </h2>
                       </div>
 
-                      <div className="px-3.5 py-2.5 flex items-center justify-between text-xs text-heritage-muted">
-                        <span className="inline-flex items-center gap-1 font-medium">
-                          <Layers className="w-3.5 h-3.5 text-heritage-gold" />
-                          {cardCount > 0 ? `${cardCount} thẻ Flashcard` : 'Thông tin & 360°'}
-                        </span>
-                        <span className="inline-flex items-center gap-1 font-semibold text-heritage-vermilion group-hover:translate-x-0.5 transition-transform">
-                          Khám phá
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
+                        <div className="px-3.5 py-2.5 space-y-1.5">
+                          {province.isMerged && (
+                            <p className="text-[11px] font-medium text-heritage-muted truncate" title={province.mergedFrom.join(' · ')}>
+                              Gồm: {province.mergedFrom.join(' · ')}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between text-xs text-heritage-muted">
+                            <span className="inline-flex items-center gap-1 font-medium">
+                              <Layers className="w-3.5 h-3.5 text-heritage-gold" />
+                              {cardCount > 0 ? `${cardCount} thẻ Flashcard` : 'Thông tin & 360°'}
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-heritage-vermilion group-hover:translate-x-0.5 transition-transform">
+                              Khám phá
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </span>
+                          </div>
+                        </div>
                     </Link>
                   );
                 })}

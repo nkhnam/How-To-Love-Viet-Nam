@@ -44,7 +44,7 @@ import SmartImage from '../ui/SmartImage';
 import UserAvatar from '../ui/UserAvatar';
 import StudyBot from '../StudyBot';
 import { usePassport } from '../../hooks/usePassport';
-import { PROVINCES } from '../../data/provinces';
+import { PROVINCES, PROVINCE_BY_SLUG, SLUG_MIGRATION_MAP } from '../../data/provinces';
 import { getQuizMeta, formatRelativeTimeVi } from '../../data/quizMeta';
 import { getSmartBlogFallbackCover, formatViDate, stripHtml } from '../../utils/blogHelpers';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
@@ -166,7 +166,13 @@ function Profile() {
                 id: d.id,
                 firstName: data.firstName || 'Thành viên',
                 photo: data.photo || '',
-                discoveredCount: Array.isArray(data.discoveredProvinces) ? data.discoveredProvinces.length : 0,
+                discoveredCount: Array.isArray(data.discoveredProvinces)
+                  ? new Set(
+                      data.discoveredProvinces
+                        .map((s) => SLUG_MIGRATION_MAP[s] || s)
+                        .filter((s) => PROVINCE_BY_SLUG[s])
+                    ).size
+                  : 0,
               };
             }),
         );
@@ -268,7 +274,7 @@ function Profile() {
           <EmptyState
             icon={User}
             title="Đăng nhập để mở Bảng điều khiển Học tập"
-            description="Theo dõi Hộ chiếu 63 tỉnh thành, lịch sử điểm Quiz, kế hoạch ôn tập và các bài viết bạn đã chia sẻ."
+            description="Theo dõi Hộ chiếu 34 tỉnh thành, lịch sử điểm Quiz, kế hoạch ôn tập và các bài viết bạn đã chia sẻ."
             actionLabel="Đăng nhập ngay"
             actionTo="/login"
           />
@@ -296,7 +302,7 @@ function Profile() {
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="jade">Thành viên HTLVN</Badge>
-                  <Badge variant="gold">{stats.count}/63 tỉnh</Badge>
+                  <Badge variant="gold">{stats.count}/34 tỉnh</Badge>
                 </div>
                 <h1 className="font-serif text-2xl sm:text-3xl font-bold text-heritage-ink">
                   {userDetails?.firstName || 'Thành viên'}
@@ -356,7 +362,7 @@ function Profile() {
                   <div>
                     <Badge variant="vermilion" className="mb-2">
                       <Compass className="w-3.5 h-3.5" />
-                      Hộ chiếu Di sản 63 tỉnh
+                      Hộ chiếu Di sản 34 tỉnh
                     </Badge>
                     <h2 className="font-serif text-xl font-bold text-heritage-ink">
                       Hành trình khám phá Việt Nam
@@ -399,7 +405,7 @@ function Profile() {
                     Đã thuộc {stats.masteredCardsCount} thẻ Flashcard 3D
                   </span>
                   <Button to="/provinces" variant="primary" size="sm">
-                    Mở Atlas 63 tỉnh
+                    Mở Atlas 34 tỉnh
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -707,7 +713,7 @@ function Profile() {
                             {member.firstName}
                           </p>
                           <p className="text-[11px] text-heritage-muted">
-                            {member.discoveredCount > 0 ? `${member.discoveredCount}/63 tỉnh` : 'Thành viên HTLVN'}
+                            {member.discoveredCount > 0 ? `${member.discoveredCount}/34 tỉnh` : 'Thành viên HTLVN'}
                           </p>
                         </div>
                       </Link>

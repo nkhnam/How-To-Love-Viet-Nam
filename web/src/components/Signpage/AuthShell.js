@@ -32,7 +32,7 @@ function AuthShell({ title, subtitle, children }) {
             &ldquo;Dân ta phải biết sử ta, cho tường gốc tích nước nhà Việt Nam.&rdquo;
           </blockquote>
           <p className="text-sm text-stone-300 leading-relaxed">
-            Đồng hành cùng học sinh THPT khám phá 63 tỉnh thành, ôn luyện Lịch Sử – GDĐP chuẩn GDPT 2018 và lưu giữ
+            Đồng hành cùng học sinh THPT khám phá 34 tỉnh thành, ôn luyện Lịch Sử – GDĐP chuẩn GDPT 2018 và lưu giữ
             Hộ chiếu Di sản cá nhân.
           </p>
 
@@ -41,7 +41,7 @@ function AuthShell({ title, subtitle, children }) {
               <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
                 <Compass className="w-4 h-4 text-amber-300" />
               </span>
-              <span>Hộ chiếu Di sản đồng bộ tiến độ 63 tỉnh thành</span>
+              <span>Hộ chiếu Di sản đồng bộ tiến độ 34 tỉnh thành</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">

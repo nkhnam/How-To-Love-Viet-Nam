@@ -20,7 +20,7 @@ import Card from '../ui/Card';
 import FlipCard3D from '../provinces/FlipCard3D';
 
 const STATS = [
-  { value: '63', label: 'Tỉnh thành Việt Nam', sub: 'Bản đồ tương tác & 360°' },
+  { value: '34', label: 'Tỉnh, Thành phố Việt Nam', sub: 'Cập nhật theo NQ 202/2025/QH15' },
   { value: '100+', label: 'Thẻ Flashcard 3D', sub: 'Danh lam & Di tích lịch sử' },
   { value: '6', label: 'Khóa học THPT', sub: 'Lịch Sử & GDĐP lớp 10–12' },
   { value: '24/7', label: 'Trợ lý AI Học tập', sub: 'RAG SGK & Giải bài từ ảnh' },
@@ -37,23 +37,23 @@ const FEATURED_PROVINCES = [
   },
   {
     name: 'TP. Hồ Chí Minh',
-    subtitle: 'Đô thị năng động phương Nam',
+    subtitle: 'Siêu đô thị năng động phương Nam',
     region: 'Miền Nam',
     image: '/Img/tphcm.jpeg',
     to: '/provinces/tp-hcm',
     gridClass: 'md:col-span-1 lg:col-span-1 lg:row-span-2',
   },
   {
-    name: 'Thừa Thiên Huế',
+    name: 'TP. Huế',
     subtitle: 'Cố đô di sản triều Nguyễn',
     region: 'Miền Trung',
     image: '/Img/hue.jpeg',
-    to: '/provinces/thua-thien-hue',
+    to: '/provinces/hue',
     gridClass: 'md:col-span-1 lg:col-span-1',
   },
   {
-    name: 'TP. Đà Lạt · Lâm Đồng',
-    subtitle: 'Cao nguyên sương mù thơ mộng',
+    name: 'Lâm Đồng',
+    subtitle: 'Tây Nguyên & Duyên hải kết nối',
     region: 'Miền Trung',
     image: '/Img/dalat.jpeg',
     to: '/provinces/lam-dong',
@@ -81,8 +81,8 @@ const ECOSYSTEM_PILLARS = [
   {
     icon: Map,
     color: 'bg-heritage-vermilion-soft text-heritage-vermilion',
-    title: 'Atlas 63 Tỉnh & Góc nhìn 360°',
-    desc: 'Khám phá trực quan từng tỉnh thành qua bản đồ SVG tương tác, thông tin văn hóa – lịch sử và không gian 360 độ.',
+    title: 'Atlas 34 Tỉnh thành & Góc nhìn 360°',
+    desc: 'Khám phá trực quan 34 tỉnh, thành phố mới qua bản đồ SVG tương tác, thông tin văn hóa – lịch sử và không gian 360 độ.',
     to: '/provinces',
     cta: 'Mở bản đồ',
   },
@@ -90,7 +90,7 @@ const ECOSYSTEM_PILLARS = [
     icon: Layers,
     color: 'bg-heritage-gold-soft text-amber-800',
     title: 'Flashcard 3D & Hộ chiếu Di sản',
-    desc: 'Lật thẻ hai mặt Danh lam thắng cảnh và Di tích lịch sử, đánh dấu ghi nhớ và sưu tầm huy hiệu 63 tỉnh thành.',
+    desc: 'Lật thẻ hai mặt Danh lam thắng cảnh và Di tích lịch sử, đánh dấu ghi nhớ và sưu tầm huy hiệu 34 tỉnh thành.',
     to: '/provinces/ha-noi?tab=flashcards',
     cta: 'Thử lật thẻ',
   },
@@ -123,11 +123,11 @@ const PREVIEW_CARDS = [
   },
   {
     id: 'hue-dltc-1',
-    province: 'Thừa Thiên Huế',
+    province: 'TP. Huế',
     category: 'Danh lam thắng cảnh',
     front: '/Img/ThuaThienHue/DLTC-1-front.png',
     back: '/Img/ThuaThienHue/DLTC-1-back.png',
-    to: '/provinces/thua-thien-hue?tab=flashcards',
+    to: '/provinces/hue?tab=flashcards',
   },
   {
     id: 'tphcm-dltc-1',
@@ -148,7 +148,7 @@ const FAQ_DATA = [
   {
     question: 'Bộ sản phẩm này bao gồm những tính năng và tiện ích gì?',
     answer:
-      'HTLVN kết hợp đa nền tảng gồm Website, Ứng dụng di động và hơn 100 thẻ Flashcards vật lý/3D tích hợp AI. Trên website, người học có thể khám phá Atlas 63 tỉnh thành, xem góc nhìn 360°, học bài giảng E-learning, làm Quiz trắc nghiệm và sử dụng AI Chatbot / giải bài tập từ hình ảnh.',
+      'HTLVN kết hợp đa nền tảng gồm Website, Ứng dụng di động và hơn 100 thẻ Flashcards vật lý/3D tích hợp AI. Trên website, người học có thể khám phá Atlas 34 tỉnh thành mới sau sáp nhập, xem góc nhìn 360°, học bài giảng E-learning, làm Quiz trắc nghiệm và sử dụng AI Chatbot / giải bài tập từ hình ảnh.',
   },
   {
     question: 'Ngoài mục đích giáo dục, bộ sản phẩm còn hướng tới giá trị gì?',
@@ -158,7 +158,7 @@ const FAQ_DATA = [
   {
     question: 'Đối tượng nào có thể sử dụng HTLVN?',
     answer:
-      'Sản phẩm hướng đến học sinh, sinh viên đang ôn tập Lịch Sử và GDĐP trên lớp cũng như mọi cá nhân yêu thích khám phá văn hóa, kiến trúc và chiều sâu lịch sử trải dài 63 tỉnh thành Việt Nam.',
+      'Sản phẩm hướng đến học sinh, sinh viên đang ôn tập Lịch Sử và GDĐP trên lớp cũng như mọi cá nhân yêu thích khám phá văn hóa, kiến trúc và chiều sâu lịch sử trải dài 34 tỉnh, thành phố Việt Nam.',
   },
 ];
 
@@ -205,21 +205,21 @@ function Home() {
             Học <span className="text-amber-300">Lịch Sử</span> &amp;{' '}
             <span className="text-amber-300">GDĐP</span> qua hành trình{' '}
             <span className="underline decoration-heritage-vermilion decoration-4 underline-offset-8">
-              63 Tỉnh thành
+              34 Tỉnh thành
             </span>
           </h1>
 
           <p className="mt-6 text-base sm:text-lg lg:text-xl text-stone-200 max-w-3xl mx-auto leading-relaxed font-normal">
             Khám phá di sản Việt Nam ngay tại nhà với hơn{' '}
             <strong className="text-white font-semibold">100 thẻ Flashcard 3D</strong>, bản đồ tương tác{' '}
-            <strong className="text-white font-semibold">63 tỉnh thành</strong>, kho bài giảng E-learning và{' '}
+            <strong className="text-white font-semibold">34 tỉnh, thành phố</strong>, kho bài giảng E-learning và{' '}
             <strong className="text-white font-semibold">Trợ lý AI chuyên sâu</strong>.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
             <Button to="/provinces" variant="primary" size="lg">
               <Compass className="w-5 h-5" />
-              Khám phá 63 Tỉnh thành
+              Khám phá 34 Tỉnh thành
             </Button>
             <Button to="/ai" variant="glass" size="lg">
               <Sparkles className="w-5 h-5 text-amber-300" />
@@ -253,12 +253,12 @@ function Home() {
               Nhìn ngắm nét đặc trưng văn hóa &amp; kiến trúc đất nước
             </h2>
             <p className="mt-3 text-heritage-muted text-base sm:text-lg leading-relaxed">
-              Trải dài 63 tỉnh thành từ Bắc vào Nam, mỗi vùng đất đều lưu giữ những di tích lịch sử hào hùng và danh
-              lam thắng cảnh đặc sắc.
+              Trải dài 34 tỉnh, thành phố từ Bắc vào Nam, mỗi vùng đất đều lưu giữ những di tích lịch sử hào hùng và
+              danh lam thắng cảnh đặc sắc.
             </p>
           </div>
           <Button to="/provinces" variant="outline" className="shrink-0 self-start md:self-auto">
-            Xem tất cả 63 tỉnh thành
+            Xem tất cả 34 tỉnh thành
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
@@ -356,7 +356,7 @@ function Home() {
             <ul className="space-y-2.5 text-sm text-heritage-ink">
               <li className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-heritage-jade shrink-0" />
-                <span>Hơn 100 thẻ phủ khắp 63 tỉnh thành Bắc – Trung – Nam</span>
+                <span>Hơn 100 thẻ phủ khắp 34 tỉnh thành Bắc – Trung – Nam</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-heritage-jade shrink-0" />

@@ -28,7 +28,7 @@ const SUBJECT_OPTIONS = ['Lịch Sử', 'Giáo dục địa phương'];
 const ACTIVITIES_BY_SUBJECT = {
   'Lịch Sử': ['Học Flashcard', 'Học bài giảng', 'Làm Quiz', 'Luyện tập', 'Viết Blog'],
   'Giáo dục địa phương': [
-    'Khám phá 63 tỉnh thành',
+    'Khám phá 34 tỉnh thành',
     'Học Flashcard',
     'Học bài giảng',
     'Làm Quiz',

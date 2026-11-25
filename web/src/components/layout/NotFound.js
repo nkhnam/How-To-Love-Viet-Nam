@@ -19,7 +19,7 @@ function NotFound() {
         </h1>
         <p className="text-heritage-muted text-base mb-8">
           Đường dẫn bạn truy cập có thể đã thay đổi hoặc không tồn tại. Bạn có thể quay về trang chủ hoặc khám phá
-          bản đồ 63 tỉnh thành Việt Nam.
+          bản đồ 34 tỉnh, thành phố Việt Nam.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button to="/" variant="primary" size="lg">
@@ -28,7 +28,7 @@ function NotFound() {
           </Button>
           <Button to="/provinces" variant="outline" size="lg">
             <Compass className="w-4 h-4" />
-            Khám phá 63 tỉnh thành
+            Khám phá 34 tỉnh thành
           </Button>
         </div>
       </section>

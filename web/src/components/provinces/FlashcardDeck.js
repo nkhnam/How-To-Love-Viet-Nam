@@ -28,17 +28,19 @@ function FlashcardDeck({ province, initialType = 'all', masteredSet, onSetMaster
     const dltc = (province.dltcCards || []).map((c, idx) => ({
       ...c,
       label: `Danh lam thắng cảnh #${idx + 1}`,
-      shortKind: 'Danh lam',
+      shortKind:
+        province.isMerged && c.subRegion ? `Danh lam · ${c.subRegion}` : 'Danh lam',
     }));
     const dtls = (province.dtlsCards || []).map((c, idx) => ({
       ...c,
       label: `Di tích lịch sử #${idx + 1}`,
-      shortKind: 'Di tích',
+      shortKind:
+        province.isMerged && c.subRegion ? `Di tích · ${c.subRegion}` : 'Di tích',
     }));
     if (filterType === 'dltc') return dltc;
     if (filterType === 'dtls') return dtls;
     return [...dltc, ...dtls];
-  }, [province.dltcCards, province.dtlsCards, filterType]);
+  }, [province.dltcCards, province.dtlsCards, province.isMerged, filterType]);
 
   useEffect(() => {
     setCurrentIndex(0);

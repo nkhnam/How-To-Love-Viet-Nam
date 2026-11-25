@@ -36,7 +36,7 @@ function Login() {
   };
 
   return (
-    <AuthShell title="Đăng nhập" subtitle="Tiếp tục hành trình khám phá Lịch Sử & 63 tỉnh thành cùng HTLVN.">
+    <AuthShell title="Đăng nhập" subtitle="Tiếp tục hành trình khám phá Lịch Sử & 34 tỉnh thành cùng HTLVN.">
       {error && (
         <div
           role="alert"

@@ -58,7 +58,7 @@ function Contact() {
             Liên hệ &amp; Góp ý phát triển
           </h1>
           <p className="mt-2 text-heritage-muted text-sm sm:text-base max-w-2xl">
-            Mọi đóng góp về tư liệu 63 tỉnh thành, đề Quiz hay tính năng Trợ lý AI đều giúp HTLVN ngày càng hoàn thiện
+            Mọi đóng góp về tư liệu 34 tỉnh thành, đề Quiz hay tính năng Trợ lý AI đều giúp HTLVN ngày càng hoàn thiện
             hơn cho học sinh Việt Nam.
           </p>
         </div>
@@ -109,7 +109,7 @@ function Contact() {
                   <div className="flex flex-wrap gap-2">
                     <Button to="/provinces" variant="glass" size="sm">
                       <Compass className="w-3.5 h-3.5" />
-                      Atlas 63 tỉnh
+                      Atlas 34 tỉnh
                     </Button>
                     <Button to="/learn" variant="glass" size="sm">
                       <BookOpen className="w-3.5 h-3.5" />

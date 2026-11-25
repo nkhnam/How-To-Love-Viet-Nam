@@ -69,7 +69,7 @@ function Register() {
   };
 
   return (
-    <AuthShell title="Đăng ký tài khoản" subtitle="Tạo hồ sơ học tập miễn phí để lưu Hộ chiếu 63 tỉnh và điểm Quiz.">
+    <AuthShell title="Đăng ký tài khoản" subtitle="Tạo hồ sơ học tập miễn phí để lưu Hộ chiếu 34 tỉnh và điểm Quiz.">
       {error && (
         <div
           role="alert"
